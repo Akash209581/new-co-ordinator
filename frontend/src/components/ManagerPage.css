@@ -1,0 +1,232 @@
+.manager-page {
+  min-height: 100vh;
+  padding: 32px;
+  background: radial-gradient(circle at 20% 20%, #2a1f4d, #120c26 50%, #0a0718 100%);
+  color: #f7f6ff;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.manager-card {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.manager-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 11px;
+  color: #b9b5ff;
+  margin: 0 0 4px 0;
+}
+
+.manager-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.sub {
+  margin: 4px 0 0 0;
+  color: #c9c6df;
+}
+
+.auth-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  color: #d9d6ef;
+}
+
+.field input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #f7f6ff;
+}
+
+.primary,
+.ghost,
+.danger {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.08s ease, opacity 0.08s ease;
+}
+
+.primary {
+  background: linear-gradient(135deg, #6f8cff, #9a6bff);
+  color: #0e0b1d;
+}
+
+.ghost {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f7f6ff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.danger {
+  background: rgba(255, 99, 132, 0.18);
+  color: #ffb6c7;
+  border: 1px solid rgba(255, 99, 132, 0.4);
+}
+
+.primary:disabled,
+.ghost:disabled,
+.danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary:hover,
+.ghost:hover,
+.danger:hover {
+  transform: translateY(-1px);
+}
+
+.status {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.status.success {
+  background: rgba(120, 255, 214, 0.12);
+  border: 1px solid rgba(120, 255, 214, 0.4);
+  color: #b2ffe9;
+}
+
+.status.error {
+  background: rgba(255, 99, 132, 0.12);
+  border: 1px solid rgba(255, 99, 132, 0.4);
+  color: #ffc6d5;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 8px;
+}
+
+.list-header h2 {
+  margin: 0;
+}
+
+.pill {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #dcd9f4;
+}
+
+.table {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.6fr 1.1fr 1fr 1.2fr 0.9fr;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.table-head {
+  font-weight: 700;
+  color: #d9d6ef;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.table-row {
+  color: #f7f6ff;
+}
+
+.table-row .muted {
+  color: #b4b1cb;
+}
+
+.table-row .strong {
+  font-weight: 600;
+}
+
+.table-row .small {
+  font-size: 12px;
+}
+
+.table-row .mono {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+}
+
+@media (max-width: 1024px) {
+  .table-head,
+  .table-row {
+    grid-template-columns: 1.2fr 1.5fr 1fr 1fr;
+    grid-template-areas:
+      "id name name action"
+      "event event paid date";
+    row-gap: 6px;
+  }
+
+  .table-head span:nth-child(1),
+  .table-row span:nth-child(1) { grid-area: id; }
+  .table-head span:nth-child(2),
+  .table-row span:nth-child(2) { grid-area: name; }
+  .table-head span:nth-child(3),
+  .table-row span:nth-child(3) { grid-area: event; }
+  .table-head span:nth-child(4),
+  .table-row span:nth-child(4) { grid-area: paid; }
+  .table-head span:nth-child(5),
+  .table-row span:nth-child(5) { grid-area: date; }
+  .table-head span:nth-child(6),
+  .table-row span:nth-child(6) { grid-area: action; }
+}
+
+@media (max-width: 640px) {
+  .manager-card { padding: 16px; }
+  .manager-header { flex-direction: column; }
+  .table-head,
+  .table-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "id action"
+      "name name"
+      "event event"
+      "paid date";
+  }
+}

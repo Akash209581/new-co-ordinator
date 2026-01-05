@@ -1,0 +1,652 @@
+{
+"Sports":[
+ {
+  "Category": "Men's Athletics\n\nTrack & Field",
+  "Event": "100 M"
+ },
+ {
+  "Event": "400 M"
+ },
+ {
+  "Event": "800 M"
+ },
+ {
+  "Event": "3 K"
+ },
+ {
+  "Event": "4 x 100 M Relay"
+ },
+ {
+  "Event": "4 x 400 M Relay"
+ },
+ {
+  "Event": "Long jump"
+ },
+ {
+  "Event": "Shot put"
+ },
+ {
+  "Category": "Women's Athletics\n\nTrack & Field",
+  "Event": "100 M"
+ },
+ {
+  "Event": "400 M"
+ },
+ {
+  "Event": "800 M"
+ },
+ {
+  "Event": "4 x 100 M Relay"
+ },
+ {
+  "Event": "4 x 400 M Relay"
+ },
+ {
+  "Event": "Long jump"
+ },
+ {
+  "Event": "Shot put"
+ },
+ {
+  "Category": "Men's Individual & Indoor Sports",
+  "Event": "Chess"
+ },
+ {
+  "Event": "Table Tennis"
+ },
+ {
+  "Event": "Traditional Yogasana"
+ },
+ {
+  "Event": "Artistic Yogasana"
+ },
+ {
+  "Event": "Takewondo - under 8 wt. categories"
+ },
+ {
+  "Category": "Women's Individual & Indoor Sports",
+  "Event": "Chess"
+ },
+ {
+  "Event": "Table Tennis"
+ },
+ {
+  "Event": "Traditional Yogasana"
+ },
+ {
+  "Event": "Artistic Yogasana"
+ },
+ {
+  "Event": "Takewondo - under 8 wt. categories"
+ },
+ {
+  "Event": "Tennikoit"
+ },
+ {
+  "Category": "Men's Team Field Sports",
+  "Event": "Cricket Championship (13+2)*"
+ },
+ {
+  "Event": "Volley ball (6+4)*"
+ },
+ {
+  "Event": "Basket ball (5+5)*"
+ },
+ {
+  "Event": "Kabaddi (7+3)*"
+ },
+ {
+  "Event": "Foot ball (7+3)*"
+ },
+ {
+  "Event": "Kho-Kho (9+3)*"
+ },
+ {
+  "Event": "Hockey (7+3)*"
+ },
+ {
+  "Category": "Women's Team Field Sports",
+  "Event": "Volley ball (6+4)*"
+ },
+ {
+  "Event": "Basket ball (5+5)*"
+ },
+ {
+  "Event": "Kabaddi (7+3)*"
+ },
+ {
+  "Event": "Kho-Kho (9+3)*"
+ },
+ {
+  "Event": "Throw ball (6+3)*"
+ },
+ {
+  "Category": "Para Athletics\nMen",
+  "Event": "100 M - Hand Amputee"
+ },
+ {
+  "Event": "100 M - Leg Amputee"
+ },
+ {
+  "Event": "100 M - Visual impairment"
+ },
+ {
+  "Event": "400 M - Hand Amputee"
+ },
+ {
+  "Event": "400 M - Leg Amputee"
+ },
+ {
+  "Event": "400 M - Visual impairment"
+ },
+ {
+  "Category": "Para Cricket Men",
+  "Event": "Cricket - Physically challenged"
+ }
+],
+"Culturals":[
+ null,
+ {
+  "Column1": "S.No",
+  "5": "Category",
+  "Prize money for Performing arts, Visual arts, Fashion": "Event",
+  "Column4": "Count",
+  "488500": "1st Prize",
+  "Column6": "2nd Prize",
+  "Column7": "3rd Prize",
+  "Column8": "Sub Total"
+ },
+ {
+  "Column1": 1,
+  "5": "Dance",
+  "Prize money for Performing arts, Visual arts, Fashion": "Classical Dance Solo",
+  "Column4": 1,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 2,
+  "Prize money for Performing arts, Visual arts, Fashion": "Dancing Star – Western Solo",
+  "Column4": 1,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 3,
+  "Prize money for Performing arts, Visual arts, Fashion": "Dancing Jodi – Western Duo",
+  "Column4": 2,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 4,
+  "Prize money for Performing arts, Visual arts, Fashion": "Spot Dance - Jodi",
+  "Column4": 2,
+  "488500": 3000,
+  "Column6": 2000,
+  "Column7": 1500,
+  "Column8": 6500
+ },
+ {
+  "Column1": 5,
+  "Prize money for Performing arts, Visual arts, Fashion": "Group Dance (10 no.)",
+  "Column4": 10,
+  "488500": 15000,
+  "Column6": 12000,
+  "Column7": 8000,
+  "Column8": 35000
+ },
+ {
+  "Column1": 6,
+  "5": "Music",
+  "Prize money for Performing arts, Visual arts, Fashion": "Singing Idol",
+  "Column4": 1,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 7,
+  "Prize money for Performing arts, Visual arts, Fashion": "Group Singing (6 no.)",
+  "Column4": 6,
+  "488500": 5000,
+  "Column6": 3500,
+  "Column7": 2000,
+  "Column8": 10500
+ },
+ {
+  "Column1": 8,
+  "Prize money for Performing arts, Visual arts, Fashion": "Singing Jodi",
+  "Column4": 2,
+  "488500": 3000,
+  "Column6": 2000,
+  "Column7": 1000,
+  "Column8": 6000
+ },
+ {
+  "Column1": 9,
+  "Prize money for Performing arts, Visual arts, Fashion": "Classical\/Light Vocal Solo",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 10,
+  "Prize money for Performing arts, Visual arts, Fashion": "Western Vocal Solo",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 11,
+  "Prize money for Performing arts, Visual arts, Fashion": "Anthyakshari Duo",
+  "Column4": 2,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 12,
+  "Prize money for Performing arts, Visual arts, Fashion": "Instrumental Solo",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 13,
+  "5": "Theatre",
+  "Prize money for Performing arts, Visual arts, Fashion": "Skit (8 no.)",
+  "Column4": 8,
+  "488500": 8000,
+  "Column6": 5000,
+  "Column7": 4000,
+  "Column8": 17000
+ },
+ {
+  "Column1": 14,
+  "Prize money for Performing arts, Visual arts, Fashion": "Mime (6 no.)",
+  "Column4": 6,
+  "488500": 6000,
+  "Column6": 4000,
+  "Column7": 2000,
+  "Column8": 12000
+ },
+ {
+  "Column1": 15,
+  "Prize money for Performing arts, Visual arts, Fashion": "Dialogue Dhamakha",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 16,
+  "Prize money for Performing arts, Visual arts, Fashion": "Mono Action",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 17,
+  "Prize money for Performing arts, Visual arts, Fashion": "On the Spot Ad making",
+  "Column4": 4,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 18,
+  "5": "Literature",
+  "Prize money for Performing arts, Visual arts, Fashion": "Master Orator",
+  "Column4": 1,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 19,
+  "Prize money for Performing arts, Visual arts, Fashion": "Spot Creative writing",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 20,
+  "Prize money for Performing arts, Visual arts, Fashion": "Telugu Vyaasa rachana",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 21,
+  "Prize money for Performing arts, Visual arts, Fashion": "Shayari – Hindi",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 22,
+  "Prize money for Performing arts, Visual arts, Fashion": "Impromptu (JAM)",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 23,
+  "Prize money for Performing arts, Visual arts, Fashion": "Story telling",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 24,
+  "Prize money for Performing arts, Visual arts, Fashion": "Quiz wiz (3 no.)",
+  "Column4": 3,
+  "488500": 3000,
+  "Column6": 2000,
+  "Column7": 1500,
+  "Column8": 6500
+ },
+ {
+  "Column1": 25,
+  "Prize money for Performing arts, Visual arts, Fashion": "Word Master",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 26,
+  "Prize money for Performing arts, Visual arts, Fashion": "Dumb charades (2 no.)",
+  "Column4": 2,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 27,
+  "5": "Visual Arts & Craft",
+  "Prize money for Performing arts, Visual arts, Fashion": "Theme Painting",
+  "Column4": 1,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 28,
+  "Prize money for Performing arts, Visual arts, Fashion": "Clay modelling",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 29,
+  "Prize money for Performing arts, Visual arts, Fashion": "Rangoli (2 no.)",
+  "Column4": 2,
+  "488500": 3000,
+  "Column6": 2000,
+  "Column7": 1000,
+  "Column8": 6000
+ },
+ {
+  "Column1": 30,
+  "Prize money for Performing arts, Visual arts, Fashion": "Mehandi",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 31,
+  "Prize money for Performing arts, Visual arts, Fashion": "Collage",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 32,
+  "Prize money for Performing arts, Visual arts, Fashion": "Face Painting",
+  "Column4": 2,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 33,
+  "Prize money for Performing arts, Visual arts, Fashion": "Pencil Sketching",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 34,
+  "Prize money for Performing arts, Visual arts, Fashion": "Mandala",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 35,
+  "5": "Fashion Design & Styling",
+  "Prize money for Performing arts, Visual arts, Fashion": "Haute Couture - Theme Ramp walk \n(12 no.)",
+  "Column4": 12,
+  "488500": 20000,
+  "Column6": 15000,
+  "Column7": 12000,
+  "Column8": 47000
+ },
+ {
+  "Column1": 36,
+  "Prize money for Performing arts, Visual arts, Fashion": "Craft villa ( Accessory design)",
+  "Column4": 2,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 37,
+  "Prize money for Performing arts, Visual arts, Fashion": "Texart (Fashion sketching)",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 38,
+  "Prize money for Performing arts, Visual arts, Fashion": "T-Shirt designing",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 39,
+  "5": "Digital Storytelling & Creative Media",
+  "Prize money for Performing arts, Visual arts, Fashion": "Short film",
+  "Column4": 5,
+  "488500": 20000,
+  "Column6": 15000,
+  "Column7": 12000,
+  "Column8": 47000
+ },
+ {
+  "Column1": 40,
+  "Prize money for Performing arts, Visual arts, Fashion": "Theme Photography (Online)",
+  "Column4": 1,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 41,
+  "Prize money for Performing arts, Visual arts, Fashion": "Digital Poster making",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 42,
+  "Prize money for Performing arts, Visual arts, Fashion": "Mahotsav Digital Chronicle",
+  "Column4": 3,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 43,
+  "Prize money for Performing arts, Visual arts, Fashion": "Reel Making",
+  "Column4": 4,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 44,
+  "5": "Gaming",
+  "Prize money for Performing arts, Visual arts, Fashion": "Valorant (PC)",
+  "Column4": 5,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 45,
+  "Prize money for Performing arts, Visual arts, Fashion": "E- Football (PC)",
+  "Column4": 3,
+  "488500": 3000,
+  "Column6": 2000,
+  "Column7": 1500,
+  "Column8": 6500
+ },
+ {
+  "Column1": 46,
+  "Prize money for Performing arts, Visual arts, Fashion": "Counter Strike (PC)",
+  "Column4": 5,
+  "488500": 4000,
+  "Column6": 3000,
+  "Column7": 2000,
+  "Column8": 9000
+ },
+ {
+  "Column1": 47,
+  "Prize money for Performing arts, Visual arts, Fashion": "Smash Karts (PC)",
+  "Column4": 1,
+  "488500": 2000,
+  "Column6": 1500,
+  "Column7": 1000,
+  "Column8": 4500
+ },
+ {
+  "Column1": 48,
+  "5": "Robo Games",
+  "Prize money for Performing arts, Visual arts, Fashion": "Line follower robot",
+  "Column4": 4,
+  "488500": 8000,
+  "Column6": 6000,
+  "Column7": 4000,
+  "Column8": 18000
+ },
+ {
+  "Column1": 49,
+  "Prize money for Performing arts, Visual arts, Fashion": "Bot Wrestling",
+  "Column4": 4,
+  "488500": 8000,
+  "Column6": 6000,
+  "Column7": 4000,
+  "Column8": 18000
+ },
+ {
+  "Column1": 50,
+  "Prize money for Performing arts, Visual arts, Fashion": "Robo races",
+  "Column4": 4,
+  "488500": 8000,
+  "Column6": 6000,
+  "Column7": 4000,
+  "Column8": 18000
+ },
+ {
+  "Column1": 51,
+  "5": "Spot Light",
+  "Prize money for Performing arts, Visual arts, Fashion": "Mr. Mahotsav",
+  "Column4": 1,
+  "488500": 4000,
+  "Column8": 4000
+ },
+ {
+  "Column1": 52,
+  "Prize money for Performing arts, Visual arts, Fashion": "Ms. Mahotsav",
+  "Column4": 1,
+  "488500": 4000,
+  "Column8": 4000
+ },
+ {
+  "Column1": 53,
+  "Prize money for Performing arts, Visual arts, Fashion": "Mahotsav Got Talent ",
+  "Column4": 10,
+  "488500": 7000,
+  "Column6": 5000,
+  "Column7": 3000,
+  "Column8": 15000
+ },
+ {
+  "Prize money for Performing arts, Visual arts, Fashion": "Total cash prize estimate",
+  "Column4": 0,
+  "Column8": 488500
+ },
+ {
+  "Prize money for Performing arts, Visual arts, Fashion": "No of mementoes required",
+  "Column4": 420
+ }
+]
+}
