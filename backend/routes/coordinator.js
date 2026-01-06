@@ -441,6 +441,105 @@ router.put('/profile', asyncHandler(async (req, res) => {
 
 // ===== REGISTRATION/PAYMENT ROUTES =====
 
+// In-memory cache for search results (rate limiting optimization)
+const searchCache = new Map();
+const SEARCH_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const lastSearchTimes = new Map(); // Track last search time per user
+const SEARCH_RATE_LIMIT = 500; // Minimum 500ms between searches per user
+
+// Clear expired cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of searchCache.entries()) {
+    if (now - value.timestamp > SEARCH_CACHE_TTL) {
+      searchCache.delete(key);
+    }
+  }
+}, 60 * 1000); // Run every minute
+
+// @desc    Search participants by MHID for autocomplete
+// @route   GET /api/coordinator/registrations/search
+// @access  Private
+router.get('/registrations/search', asyncHandler(async (req, res) => {
+  const { query } = req.query;
+  const userId = req.user._id.toString();
+  
+  if (!query || query.length < 2) {
+    return res.json([]);
+  }
+  
+  // Rate limiting per user
+  const lastSearchTime = lastSearchTimes.get(userId) || 0;
+  const now = Date.now();
+  if (now - lastSearchTime < SEARCH_RATE_LIMIT) {
+    // Return cached result if available
+    const cacheKey = `${userId}:${query.toUpperCase()}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached) {
+      return res.json(cached.data);
+    }
+    return res.status(429).json({ error: 'Too many requests. Please wait.' });
+  }
+  lastSearchTimes.set(userId, now);
+  
+  // Check cache first
+  const cacheKey = `${userId}:${query.toUpperCase()}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && (now - cached.timestamp < SEARCH_CACHE_TTL)) {
+    return res.json(cached.data);
+  }
+
+  const searchQuery = query.toUpperCase().trim();
+  
+  // Search in Registration collection with flexible matching
+  const participants = await Registration.find({
+    $or: [
+      { userId: { $regex: `^${searchQuery}`, $options: 'i' } },
+      { registerId: { $regex: `^${searchQuery}`, $options: 'i' } },
+      { name: { $regex: searchQuery, $options: 'i' } },
+      { phone: { $regex: searchQuery } }
+    ]
+  })
+  .select('userId registerId name email phone paymentStatus college userType participationType paidAmount paymentAmount')
+  .sort({ userId: 1 }) // Sort by userId to show MH26000001, MH26000002, etc. in order
+  .limit(10)
+  .lean();
+
+  const results = participants.map(p => {
+    // Calculate fee for display
+    let fee = 200;
+    if (p.userType === 'visitor') {
+      fee = 200;
+    } else if (p.userType === 'participant') {
+      fee = 200;
+    }
+    
+    return {
+      participantId: p.userId || p.registerId,
+      userId: p.userId,
+      registerId: p.registerId,
+      name: p.name,
+      email: p.email,
+      phone: p.phone,
+      college: p.college,
+      userType: p.userType,
+      participationType: p.participationType,
+      paymentStatus: p.paymentStatus || 'unpaid',
+      isPaid: p.paymentStatus === 'paid',
+      paidAmount: p.paidAmount || 0,
+      paymentAmount: fee
+    };
+  });
+  
+  // Cache the results
+  searchCache.set(cacheKey, {
+    data: results,
+    timestamp: Date.now()
+  });
+
+  res.json(results);
+}));
+
 // @desc    Get participant details by ID for payment processing
 // @route   GET /api/coordinator/registrations/participant/:id
 // @access  Private
@@ -456,10 +555,14 @@ router.get('/registrations/participant/:id', [
     });
   }
 
+  const participantId = req.params.id.toUpperCase().trim();
+
   const registration = await Registration.findOne({ 
     $or: [
-      { registerId: req.params.id.toUpperCase() },
-      { userId: req.params.id.toUpperCase() }
+      { registerId: participantId },
+      { userId: participantId },
+      { registerId: { $regex: `^${participantId}$`, $options: 'i' } },
+      { userId: { $regex: `^${participantId}$`, $options: 'i' } }
     ]
   }).populate('processedBy', 'firstName lastName username');
 
@@ -523,8 +626,8 @@ router.get('/registrations/unpaid', asyncHandler(async (req, res) => {
 
   const unpaidRegistrations = await Registration.find(query)
     .populate('processedBy', 'firstName lastName username')
-    .sort({ createdAt: -1 })
-    .limit(100);
+    .sort({ userId: 1, createdAt: -1 }) // Sort by userId first (MH26000001, MH26000002...), then by creation date
+    .lean(); // Use lean() for better performance (returns plain JS objects)
 
   // Fetch all participant event registrations from participants collection
   const userIds = unpaidRegistrations.map(r => r.userId);

@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage';
 import CoordinatorDashboard from './components/CoordinatorDashboard';
 import TeamRegistrationNew from './components/TeamRegistrationNew';
 import ManagerPage from './components/ManagerPage';
+import VisitorRegistration from './components/VisitorRegistration';
 import './App.css';
 
 // Protected Route Component
@@ -29,10 +30,26 @@ function App() {
             } 
           />
           <Route 
+            path="/coordinator" 
+            element={
+              <ProtectedRoute>
+                <CoordinatorDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/team-registration" 
             element={
               <ProtectedRoute>
                 <TeamRegistrationNew />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/visitor-registration" 
+            element={
+              <ProtectedRoute>
+                <VisitorRegistration />
               </ProtectedRoute>
             } 
           />

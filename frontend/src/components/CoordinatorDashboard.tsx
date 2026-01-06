@@ -203,21 +203,21 @@ const CoordinatorDashboard: React.FC = () => {
 
   // Calculate amount based on selected participant type and gender
   const calculateAmount = (participantId: string, participant?: any): number => {
+    const selectedType = participantTypes[participantId] || 'sports';
+    
+    // If Inhouse is selected, always return ₹150
+    if (selectedType === 'inhouse') {
+      return 150;
+    }
+    
     // Check if participant is from Vignan colleges - flat ₹150 for all types
     const participantCollege = participant?.college || '';
     if (isVignanCollege(participantCollege)) {
       return 150;
     }
     
-    const selectedType = participantTypes[participantId] || 'visitor';
-    
-    if (selectedType === 'visitor') {
-      return 200;
-    } else if (selectedType === 'sports' || selectedType === 'cultural' || selectedType === 'both') {
-      // All participant types = 200 for non-Vignan colleges
-      return 200;
-    }
-    return 0;
+    // All participant types = 200 for non-Vignan colleges
+    return 200;
   };
 
   useEffect(() => {
@@ -377,27 +377,71 @@ const CoordinatorDashboard: React.FC = () => {
   };
 
   // Payment Management Functions
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const fetchSearchSuggestions = (query: string) => {
-    console.log('fetchSearchSuggestions called with:', query);
-    console.log('unpaidParticipants length:', unpaidParticipants.length);
-    
+  // Fetch MHID autocomplete suggestions with debouncing
+  const fetchSearchSuggestions = async (query: string) => {
     if (!query || query.length < 2) {
       setSearchSuggestions([]);
+      setShowSearchSuggestions(false);
       return;
     }
 
-    // Use unpaid participants for suggestions
-    const filtered = unpaidParticipants.filter(p => 
-      (p.userId || p.participantId || '').toLowerCase().includes(query.toLowerCase()) ||
-      (p.name || '').toLowerCase().includes(query.toLowerCase()) ||
-      (p.phoneNumber || '').includes(query)
-    ).slice(0, 8);
-    
-    console.log('Filtered suggestions:', filtered);
-    setSearchSuggestions(filtered);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:5000/api/coordinator/registrations/search?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 429) {
+        // Rate limited - use local cache if available
+        console.log('Rate limited - using cached results');
+        return;
+      }
+
+      if (response.ok) {
+        const suggestions = await response.json();
+        setSearchSuggestions(suggestions);
+        setShowSearchSuggestions(suggestions.length > 0);
+      } else {
+        setSearchSuggestions([]);
+        setShowSearchSuggestions(false);
+      }
+    } catch (error) {
+      console.error('Error fetching search suggestions:', error);
+      setSearchSuggestions([]);
+      setShowSearchSuggestions(false);
+    }
   };
 
+  // Debounce search input - increased to 500ms to match backend rate limit
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchId && searchId.length >= 2) {
+        fetchSearchSuggestions(searchId);
+      } else {
+        setSearchSuggestions([]);
+        setShowSearchSuggestions(false);
+      }
+    }, 500); // Increased from 300ms to 500ms to match backend rate limit
+
+    return () => clearTimeout(debounceTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchId]);
+
+  // Select suggestion
+  const selectSearchSuggestion = (suggestion: any) => {
+    setSearchId(suggestion.userId || suggestion.participantId);
+    setShowSearchSuggestions(false);
+    setSearchSuggestions([]);
+    // Automatically trigger search
+    setTimeout(() => {
+      searchParticipant();
+    }, 100);
+  };
+
+  // Search participant by ID
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const searchParticipant = async () => {
     if (!searchId.trim()) {
@@ -1161,21 +1205,33 @@ const CoordinatorDashboard: React.FC = () => {
     
     // DEFAULT VIEW: Show only paid users
     if (!unpaidSearchQuery || unpaidSearchQuery.trim() === '') {
-      return mergedData.filter(p => p.paymentStatus === 'paid');
+      return mergedData
+        .filter(p => p.paymentStatus === 'paid')
+        .sort((a, b) => {
+          const idA = getParticipantId(a) || '';
+          const idB = getParticipantId(b) || '';
+          return idA.localeCompare(idB);
+        });
     }
     
     // SEARCH VIEW: Show both paid and unpaid matching search criteria
     const query = unpaidSearchQuery.toLowerCase().trim();
-    return mergedData.filter(participant => {
-      const participantId = getParticipantId(participant);
-      return (
-        (participantId || '').toLowerCase().includes(query) ||
-        (participant.name || '').toLowerCase().includes(query) ||
-        (participant.event || '').toLowerCase().includes(query) ||
-        (participant.phoneNumber || '').includes(query) ||
-        (participant.department || '').toLowerCase().includes(query)
-      );
-    });
+    return mergedData
+      .filter(participant => {
+        const participantId = getParticipantId(participant);
+        return (
+          (participantId || '').toLowerCase().includes(query) ||
+          (participant.name || '').toLowerCase().includes(query) ||
+          (participant.event || '').toLowerCase().includes(query) ||
+          (participant.phoneNumber || '').includes(query) ||
+          (participant.department || '').toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => {
+        const idA = getParticipantId(a) || '';
+        const idB = getParticipantId(b) || '';
+        return idA.localeCompare(idB);
+      });
   }, [unpaidParticipants, paymentHistory, unpaidSearchQuery]);
 
   if (isLoading) {
@@ -1243,6 +1299,12 @@ const CoordinatorDashboard: React.FC = () => {
             onClick={() => setActiveTab('team')}
           >
             👥 Team Registration
+          </button>
+          <button 
+            className="nav-tab"
+            onClick={() => navigate('/visitor-registration')}
+          >
+            🎫 Visitor Registration
           </button>
         </nav>      {/* Main Content */}
       <div className="dashboard-content">
@@ -1382,6 +1444,12 @@ const CoordinatorDashboard: React.FC = () => {
                           (participant.phoneNumber || '').includes(query)
                         );
                       })
+                      .sort((a, b) => {
+                        // Sort by userId/participantId to show MH26000001, MH26000002, etc. in order
+                        const idA = getParticipantId(a) || '';
+                        const idB = getParticipantId(b) || '';
+                        return idA.localeCompare(idB);
+                      })
                       .slice(0, 8) // Show max 8 suggestions
                       .map((participant, index) => {
                         const participantId = getParticipantId(participant);
@@ -1467,7 +1535,7 @@ const CoordinatorDashboard: React.FC = () => {
                     </span>
                     <span className="participant-type-column">
                       <select
-                        value={participantTypes[participantId] || 'visitor'}
+                        value={participantTypes[participantId] || 'sports'}
                         onChange={(e) => setParticipantTypes(prev => ({
                           ...prev,
                           [participantId]: e.target.value
@@ -1475,10 +1543,10 @@ const CoordinatorDashboard: React.FC = () => {
                         disabled={participant.paymentStatus === 'paid'}
                         className="participant-type-select"
                       >
-                        <option value="visitor">👥 Visitor</option>
                         <option value="sports">⚽ Sports</option>
                         <option value="cultural">🎭 Cultural</option>
                         <option value="both">🌟 Both</option>
+                        <option value="inhouse">🏠 Inhouse</option>
                       </select>
                     </span>
                     <span className="participant-gender-column">
@@ -1863,54 +1931,199 @@ const CoordinatorDashboard: React.FC = () => {
             
             <div className="modal-body">
               {selectedParticipant && (
-                <div className="participant-info">
-                  <p><strong>Participant:</strong> {selectedParticipant.name}</p>
-                  <p><strong>ID:</strong> {getParticipantId(selectedParticipant)}</p>
-                  <p><strong>Type:</strong> {participantTypes[getParticipantId(selectedParticipant)] || selectedParticipant.userType || selectedParticipant.participationType || 'N/A'}</p>
+                <div className="participant-info" style={{
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '12px',
+                  color: 'white',
+                  marginBottom: '20px',
+                  borderLeft: '4px solid #fff'
+                }}>
+                  <p style={{ margin: '4px 0' }}><strong>Participant:</strong> {selectedParticipant.name}</p>
+                  <p style={{ margin: '4px 0' }}><strong>ID:</strong> {getParticipantId(selectedParticipant)}</p>
+                  <p style={{ margin: '4px 0' }}><strong>Type:</strong> {participantTypes[getParticipantId(selectedParticipant)] || selectedParticipant.userType || selectedParticipant.participationType || 'participant'}</p>
                 </div>
               )}
 
               {loadingEvents ? (
-                <div className="loading-events">
+                <div className="loading-events" style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: '#718096',
+                  fontSize: '1.1rem'
+                }}>
                   <p>⏳ Loading events...</p>
                 </div>
               ) : availableEvents.length > 0 ? (
-                <div className="events-checklist">
-                  <h3>Select Events to Register:</h3>
-                  <div className="events-list">
-                    {availableEvents.map((event) => (
-                      <div key={event._id} className="event-item">
-                        <label className="event-checkbox-label">
-                          <input
-                            type="checkbox"
-                            checked={selectedEventIds.includes(event._id)}
-                            onChange={() => toggleEventSelection(event._id)}
-                            className="event-checkbox"
-                          />
-                          <div className="event-details">
-                            <div className="event-title">{event.title}</div>
-                            <div className="event-meta">
-                              <span className={`event-category ${event.category}`}>
-                                {event.category}
-                              </span>
-                              <span className="event-date">
-                                {new Date(event.eventDate).toLocaleDateString()}
-                              </span>
-                              <span className="event-venue">{event.venue}</span>
-                            </div>
-                            {event.availableSlots !== undefined && (
-                              <div className="event-slots">
-                                Available: {event.availableSlots} / {event.maxParticipants}
-                              </div>
-                            )}
-                          </div>
-                        </label>
+                <div className="events-categories" style={{ marginTop: '10px' }}>
+                  {/* Sports Section */}
+                  {availableEvents.filter(e => e.category?.toLowerCase() === 'sports').length > 0 && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{
+                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        color: 'white',
+                        padding: '12px 20px',
+                        borderRadius: '10px',
+                        fontWeight: '700',
+                        fontSize: '1.1rem',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px'
+                      }}>
+                        ⚽ Sports Events
                       </div>
-                    ))}
-                  </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                        gap: '10px',
+                        padding: '0 4px'
+                      }}>
+                        {availableEvents
+                          .filter(e => e.category?.toLowerCase() === 'sports')
+                          .map((event) => (
+                            <button
+                              key={event._id}
+                              onClick={() => toggleEventSelection(event._id)}
+                              style={{
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                border: selectedEventIds.includes(event._id) 
+                                  ? '2px solid #667eea' 
+                                  : '2px solid #e2e8f0',
+                                background: selectedEventIds.includes(event._id)
+                                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                                  : 'white',
+                                color: selectedEventIds.includes(event._id) ? 'white' : '#2d3748',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                fontSize: '0.9rem',
+                                fontWeight: selectedEventIds.includes(event._id) ? '600' : '500',
+                                textAlign: 'left',
+                                position: 'relative',
+                                overflow: 'hidden'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!selectedEventIds.includes(event._id)) {
+                                  e.currentTarget.style.borderColor = '#cbd5e0';
+                                  e.currentTarget.style.transform = 'translateY(-2px)';
+                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!selectedEventIds.includes(event._id)) {
+                                  e.currentTarget.style.borderColor = '#e2e8f0';
+                                  e.currentTarget.style.transform = 'translateY(0)';
+                                  e.currentTarget.style.boxShadow = 'none';
+                                }
+                              }}
+                            >
+                              {selectedEventIds.includes(event._id) && (
+                                <span style={{
+                                  position: 'absolute',
+                                  top: '4px',
+                                  right: '4px',
+                                  fontSize: '1rem'
+                                }}>✓</span>
+                              )}
+                              <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
+                                {event.title}
+                              </div>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cultural Section */}
+                  {availableEvents.filter(e => e.category?.toLowerCase() === 'cultural').length > 0 && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{
+                        background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                        color: 'white',
+                        padding: '12px 20px',
+                        borderRadius: '10px',
+                        fontWeight: '700',
+                        fontSize: '1.1rem',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px'
+                      }}>
+                        🎭 Cultural Events
+                      </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                        gap: '10px',
+                        padding: '0 4px'
+                      }}>
+                        {availableEvents
+                          .filter(e => e.category?.toLowerCase() === 'cultural')
+                          .map((event) => (
+                            <button
+                              key={event._id}
+                              onClick={() => toggleEventSelection(event._id)}
+                              style={{
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                border: selectedEventIds.includes(event._id) 
+                                  ? '2px solid #4facfe' 
+                                  : '2px solid #e2e8f0',
+                                background: selectedEventIds.includes(event._id)
+                                  ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+                                  : 'white',
+                                color: selectedEventIds.includes(event._id) ? 'white' : '#2d3748',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                fontSize: '0.9rem',
+                                fontWeight: selectedEventIds.includes(event._id) ? '600' : '500',
+                                textAlign: 'left',
+                                position: 'relative',
+                                overflow: 'hidden'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!selectedEventIds.includes(event._id)) {
+                                  e.currentTarget.style.borderColor = '#cbd5e0';
+                                  e.currentTarget.style.transform = 'translateY(-2px)';
+                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!selectedEventIds.includes(event._id)) {
+                                  e.currentTarget.style.borderColor = '#e2e8f0';
+                                  e.currentTarget.style.transform = 'translateY(0)';
+                                  e.currentTarget.style.boxShadow = 'none';
+                                }
+                              }}
+                            >
+                              {selectedEventIds.includes(event._id) && (
+                                <span style={{
+                                  position: 'absolute',
+                                  top: '4px',
+                                  right: '4px',
+                                  fontSize: '1rem'
+                                }}>✓</span>
+                              )}
+                              <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
+                                {event.title}
+                              </div>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="no-events">
+                <div className="no-events" style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  background: '#fef5e7',
+                  borderRadius: '12px',
+                  border: '2px dashed #f39c12',
+                  color: '#d68910',
+                  fontSize: '1rem'
+                }}>
                   <p>No events available for registration</p>
                 </div>
               )}

@@ -140,6 +140,7 @@ const registrationsRoutes = require('./routes/registrations');
 const teamRegistrationRoutes = require('./routes/teamRegistration');
 const eventsRoutes = require('./routes/events');
 const managerRoutes = require('./routes/manager');
+const visitorRoutes = require('./routes/visitor');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/coordinator', coordinatorRoutes);
@@ -148,6 +149,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/participants', participantsRoutes);
 app.use('/api/registrations', registrationsRoutes);
 app.use('/api/teams', teamRegistrationRoutes);
+app.use('/api/visitors', visitorRoutes);
 app.use('/manager', managerRoutes);
 
 // Health check endpoint

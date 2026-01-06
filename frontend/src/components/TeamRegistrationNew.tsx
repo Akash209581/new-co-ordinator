@@ -784,34 +784,79 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
                   <div>No {selectedCategory} events available at the moment.</div>
                 </div>
               ) : (
-                <div className="event-grid">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                  gap: '12px',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  padding: '10px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px'
+                }}>
                   {categoryEvents.map((event: Event) => (
-                    <label key={event._id} className="event-card" style={{ cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="event"
-                        value={event._id}
-                        checked={selectedEvent?._id === event._id}
-                        onChange={() => {
-                          setSelectedEvent(event);
-                          setCurrentStep(3);
-                        }}
-                        style={{ display: 'none' }}
-                      />
-                      <div className={getCategoryBadgeClass(event.category)}>
+                    <button
+                      key={event._id}
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        setCurrentStep(3);
+                      }}
+                      style={{
+                        background: selectedEvent?._id === event._id ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white',
+                        color: selectedEvent?._id === event._id ? 'white' : '#333',
+                        border: selectedEvent?._id === event._id ? '2px solid #667eea' : '2px solid #ddd',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        textAlign: 'left',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        boxShadow: selectedEvent?._id === event._id ? '0 4px 12px rgba(102, 126, 234, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedEvent?._id !== event._id) {
+                          e.currentTarget.style.borderColor = '#667eea';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedEvent?._id !== event._id) {
+                          e.currentTarget.style.borderColor = '#ddd';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                        }
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: '0.75rem', 
+                        opacity: 0.8, 
+                        marginBottom: '4px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
                         {event.category}
                       </div>
-                      <h3>{event.title}</h3>
-                      <p>{event.description}</p>
-                      <div className="event-meta">
-                        <div className="event-meta-item">
-                          <span>📍</span> {event.venue}
-                        </div>
-                        <div className="event-meta-item">
-                          <span>👥</span> <strong>{event.currentParticipants}</strong>/{event.maxParticipants}
-                        </div>
+                      <div style={{ fontWeight: '600', marginBottom: '6px', lineHeight: '1.2' }}>
+                        {event.title}
                       </div>
-                    </label>
+                      <div style={{ 
+                        fontSize: '0.75rem', 
+                        opacity: 0.7,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <span>👥 Max: {event.maxParticipants}</span>
+                        {selectedEvent?._id === event._id && (
+                          <span style={{ fontSize: '1rem' }}>✓</span>
+                        )}
+                      </div>
+                    </button>
                   ))}
                 </div>
               )}
