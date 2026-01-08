@@ -128,24 +128,24 @@ const participantSchema = new mongoose.Schema({
 });
 
 // Generate unique participant ID
-participantSchema.pre('save', async function(next) {
+participantSchema.pre('save', async function (next) {
   if (!this.participantId) {
     const year = new Date().getFullYear().toString().slice(-2); // Last 2 digits of year
     const prefix = 'MH' + year;
-    
+
     // Find the last participant ID for this year
     const lastParticipant = await this.constructor.findOne(
       { participantId: { $regex: `^${prefix}` } },
       {},
       { sort: { participantId: -1 } }
     );
-    
+
     let nextNumber = 1;
     if (lastParticipant) {
       const lastNumber = parseInt(lastParticipant.participantId.slice(4));
       nextNumber = lastNumber + 1;
     }
-    
+
     // Format: MH26XXXXXX (6 digits with leading zeros)
     this.participantId = prefix + nextNumber.toString().padStart(6, '0');
   }
@@ -153,7 +153,7 @@ participantSchema.pre('save', async function(next) {
 });
 
 // Virtual for formatted payment amount
-participantSchema.virtual('formattedPaymentAmount').get(function() {
+participantSchema.virtual('formattedPaymentAmount').get(function () {
   return this.paymentAmount ? `₹${this.paymentAmount.toLocaleString('en-IN')}` : '₹0';
 });
 
@@ -164,4 +164,4 @@ participantSchema.index({ participantId: 1 });
 participantSchema.index({ paymentStatus: 1 });
 participantSchema.index({ submittedAt: -1 });
 
-module.exports = mongoose.model('Participant', participantSchema, 'test.participants');
+module.exports = mongoose.model('Participant', participantSchema, 'participants');

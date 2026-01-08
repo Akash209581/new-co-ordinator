@@ -59,7 +59,7 @@ router.get('/dashboard/stats', asyncHandler(async (req, res) => {
     userRole === 'admin' ? Participant.countDocuments({ registrationStatus: 'rejected' }) : Participant.countDocuments({ ...participantEventQuery, registrationStatus: 'rejected' }),
     userRole === 'admin' ? Participant.countDocuments({ paymentStatus: 'paid' }) : Participant.countDocuments({ ...participantEventQuery, paymentStatus: 'paid' }),
     Event.find(eventQuery).select('title category prizes maxParticipants currentParticipants'),
-    userRole === 'admin' ? 
+    userRole === 'admin' ?
       Participant.find().populate('eventId', 'title').sort({ createdAt: -1 }).limit(8).select('name eventId createdAt registrationStatus') :
       Participant.find(participantEventQuery).populate('eventId', 'title').sort({ createdAt: -1 }).limit(8).select('name eventId createdAt registrationStatus')
   ]);
@@ -84,10 +84,10 @@ router.get('/dashboard/stats', asyncHandler(async (req, res) => {
   const recentActivities = recentParticipants.map(participant => {
     const timeAgo = getTimeAgo(participant.createdAt);
     return {
-      time: participant.createdAt.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
+      time: participant.createdAt.toLocaleTimeString('en-US', {
+        hour: '2-digit',
         minute: '2-digit',
-        hour12: true 
+        hour12: true
       }),
       activity: `${participant.name} registered for ${participant.eventId?.title || 'Unknown Event'}`,
       status: participant.registrationStatus,
@@ -132,11 +132,11 @@ router.get('/dashboard/stats', asyncHandler(async (req, res) => {
 
   // Get payment method breakdown - filtered by coordinator
   const methodStats = await Registration.aggregate([
-    { 
-      $match: { 
+    {
+      $match: {
         processedBy: new mongoose.Types.ObjectId(coordinatorId),
-        paymentStatus: 'paid' 
-      } 
+        paymentStatus: 'paid'
+      }
     },
     {
       $group: {
@@ -151,7 +151,7 @@ router.get('/dashboard/stats', asyncHandler(async (req, res) => {
   const upiAmount = methodStats.find(m => m._id === 'upi')?.totalAmount || 0;
   const cashCount = methodStats.find(m => m._id === 'cash')?.count || 0;
   const upiCount = methodStats.find(m => m._id === 'upi')?.count || 0;
-  
+
   // Calculate totals from method breakdown (more reliable)
   const totalPaymentsProcessed = cashCount + upiCount;
   const totalAmountCollected = cashAmount + upiAmount;
@@ -232,7 +232,7 @@ router.get('/events', asyncHandler(async (req, res) => {
 
   // If fetching for registration purposes, don't filter by coordinator - show all active events
   const query = forRegistration === 'true' ? { isActive: true } : { coordinatorId };
-  
+
   if (status) query.status = status;
   if (category && category !== 'both') query.category = category;
 
@@ -286,7 +286,7 @@ router.get('/events', asyncHandler(async (req, res) => {
 // @access  Private
 router.post('/events', asyncHandler(async (req, res) => {
   const coordinatorId = req.user._id;
-  
+
   const eventData = {
     ...req.body,
     coordinatorId
@@ -409,7 +409,7 @@ router.put('/participants/:participantId/status', asyncHandler(async (req, res) 
 // @access  Private
 router.get('/profile', asyncHandler(async (req, res) => {
   const coordinator = await Coordinator.findById(req.user._id).select('-password');
-  
+
   res.status(200).json({
     success: true,
     data: {
@@ -463,11 +463,11 @@ setInterval(() => {
 router.get('/registrations/search', asyncHandler(async (req, res) => {
   const { query } = req.query;
   const userId = req.user._id.toString();
-  
+
   if (!query || query.length < 2) {
     return res.json([]);
   }
-  
+
   // Rate limiting per user
   const lastSearchTime = lastSearchTimes.get(userId) || 0;
   const now = Date.now();
@@ -481,7 +481,7 @@ router.get('/registrations/search', asyncHandler(async (req, res) => {
     return res.status(429).json({ error: 'Too many requests. Please wait.' });
   }
   lastSearchTimes.set(userId, now);
-  
+
   // Check cache first
   const cacheKey = `${userId}:${query.toUpperCase()}`;
   const cached = searchCache.get(cacheKey);
@@ -490,7 +490,7 @@ router.get('/registrations/search', asyncHandler(async (req, res) => {
   }
 
   const searchQuery = query.toUpperCase().trim();
-  
+
   // Search in Registration collection with flexible matching
   const participants = await Registration.find({
     $or: [
@@ -500,10 +500,10 @@ router.get('/registrations/search', asyncHandler(async (req, res) => {
       { phone: { $regex: searchQuery } }
     ]
   })
-  .select('userId registerId name email phone paymentStatus college userType participationType paidAmount paymentAmount')
-  .sort({ userId: 1 }) // Sort by userId to show MH26000001, MH26000002, etc. in order
-  .limit(10)
-  .lean();
+    .select('userId registerId name email phone paymentStatus college userType participationType paidAmount paymentAmount')
+    .sort({ userId: 1 }) // Sort by userId to show MH26000001, MH26000002, etc. in order
+    .limit(10)
+    .lean();
 
   const results = participants.map(p => {
     // Calculate fee for display
@@ -513,7 +513,7 @@ router.get('/registrations/search', asyncHandler(async (req, res) => {
     } else if (p.userType === 'participant') {
       fee = 200;
     }
-    
+
     return {
       participantId: p.userId || p.registerId,
       userId: p.userId,
@@ -530,7 +530,7 @@ router.get('/registrations/search', asyncHandler(async (req, res) => {
       paymentAmount: fee
     };
   });
-  
+
   // Cache the results
   searchCache.set(cacheKey, {
     data: results,
@@ -548,16 +548,16 @@ router.get('/registrations/participant/:id', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid input', 
-      errors: errors.array() 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid input',
+      errors: errors.array()
     });
   }
 
   const participantId = req.params.id.toUpperCase().trim();
 
-  const registration = await Registration.findOne({ 
+  const registration = await Registration.findOne({
     $or: [
       { registerId: participantId },
       { userId: participantId },
@@ -631,16 +631,16 @@ router.get('/registrations/unpaid', asyncHandler(async (req, res) => {
 
   // Fetch all participant event registrations from participants collection
   const userIds = unpaidRegistrations.map(r => r.userId);
-  
+
   // Query the participants collection directly to get registeredEvents
   const db = mongoose.connection.db;
   const participantsWithEvents = await db.collection('participants')
-    .find({ 
+    .find({
       userId: { $in: userIds },
       registeredEvents: { $exists: true, $ne: [] }
     })
     .toArray();
-  
+
   // Create a map for quick lookup - group by userId
   const participantEventsMap = {};
   participantsWithEvents.forEach(p => {
@@ -668,7 +668,7 @@ router.get('/registrations/unpaid', asyncHandler(async (req, res) => {
     // Get registered events for this participant
     const registeredEvents = participantEventsMap[registration.userId] || [];
     const eventNames = registeredEvents.map(e => e.eventName);
-    
+
     // Use first event name or fallback to user type/participation
     const displayEvent = eventNames.length > 0 ? eventNames[0] : `${registration.userType} - ${registration.participationType}`;
 
@@ -729,17 +729,17 @@ router.post('/registrations/mark-paid/:id', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid input', 
-      errors: errors.array() 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid input',
+      errors: errors.array()
     });
   }
 
   const { amount, paymentMethod = 'cash', paymentNotes = '' } = req.body;
   const registrationId = req.params.id.toUpperCase();
 
-  const registration = await Registration.findOne({ 
+  const registration = await Registration.findOne({
     $or: [
       { registerId: registrationId },
       { userId: registrationId }
@@ -762,13 +762,13 @@ router.post('/registrations/mark-paid/:id', [
     registrationFee = 200;
   }
 
-  const amountToCharge = amount !== undefined 
-    ? parseFloat(amount) 
+  const amountToCharge = amount !== undefined
+    ? parseFloat(amount)
     : registrationFee;
 
   registration.paymentStatus = 'paid';
-  registration.paymentAmount = registrationFee;
-  registration.paidAmount = amountToCharge;
+  registration.paidAmount = amountToCharge;  // Save to paidAmount field
+  registration.paymentAmount = amountToCharge;  // Also update paymentAmount for consistency
   registration.paymentDate = new Date();
   registration.paymentMethod = paymentMethod;
   registration.paymentNotes = paymentNotes;
@@ -776,6 +776,31 @@ router.post('/registrations/mark-paid/:id', [
 
   await registration.save();
   await registration.populate('processedBy', 'firstName lastName username');
+
+  // Also update the participants collection if the participant exists
+  try {
+    await Participant.updateMany(
+      {
+        $or: [
+          { participantId: registration.userId },
+          { participantId: registration.registerId }
+        ]
+      },
+      {
+        $set: {
+          paymentStatus: 'paid',
+          paymentDate: new Date(),
+          paymentMethod: paymentMethod,
+          paymentNotes: paymentNotes,
+          processedBy: req.user._id
+        }
+      }
+    );
+    console.log(`✅ Updated payment status in participants collection for ${registration.userId || registration.registerId}`);
+  } catch (participantUpdateError) {
+    console.error('⚠️ Error updating participants collection:', participantUpdateError);
+    // Don't fail the request if participant update fails, just log it
+  }
 
   res.json({
     success: true,
@@ -785,9 +810,8 @@ router.post('/registrations/mark-paid/:id', [
       userId: registration.userId,
       name: registration.name,
       paymentStatus: registration.paymentStatus,
-      paymentAmount: registration.paymentAmount,
       paidAmount: registration.paidAmount,
-      remainingAmount: Math.max(0, registration.paymentAmount - registration.paidAmount),
+      paymentAmount: registration.paymentAmount,
       paymentDate: registration.paymentDate,
       paymentMethod: registration.paymentMethod,
       processedBy: registration.processedBy,
@@ -816,17 +840,17 @@ router.post('/registrations/process/:id', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid input', 
-      errors: errors.array() 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid input',
+      errors: errors.array()
     });
   }
 
   const { amount, method, notes } = req.body;
   const registrationId = req.params.id.toUpperCase();
 
-  const registration = await Registration.findOne({ 
+  const registration = await Registration.findOne({
     $or: [
       { registerId: registrationId },
       { userId: registrationId }
@@ -856,14 +880,14 @@ router.post('/registrations/process/:id', [
 
   const totalPaid = (registration.paidAmount || 0) + parseFloat(amount);
   const requiredAmount = registrationFee;
-    
+
   registration.paidAmount = totalPaid;
   registration.paymentAmount = requiredAmount;
   registration.paymentDate = new Date();
   registration.paymentMethod = method;
   registration.processedBy = req.user._id;
   registration.paymentNotes = notes || '';
-    
+
   if (totalPaid >= requiredAmount) {
     registration.paymentStatus = 'paid';
   } else {
@@ -872,6 +896,30 @@ router.post('/registrations/process/:id', [
 
   await registration.save();
   await registration.populate('processedBy', 'firstName lastName username');
+
+  // Also update the participants collection if the participant exists
+  try {
+    await Participant.updateMany(
+      {
+        $or: [
+          { participantId: registration.userId },
+          { participantId: registration.registerId }
+        ]
+      },
+      {
+        $set: {
+          paymentStatus: registration.paymentStatus,
+          paymentDate: new Date(),
+          paymentMethod: method,
+          paymentNotes: notes || '',
+          processedBy: req.user._id
+        }
+      }
+    );
+    console.log(`✅ Updated payment status in participants collection for ${registration.userId || registration.registerId}`);
+  } catch (participantUpdateError) {
+    console.error('⚠️ Error updating participants collection:', participantUpdateError);
+  }
 
   res.json({
     success: true,
@@ -916,17 +964,17 @@ router.put('/registrations/update/:id', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid input', 
-      errors: errors.array() 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid input',
+      errors: errors.array()
     });
   }
 
   const { paymentStatus, paidAmount, paymentMethod, paymentNotes } = req.body;
   const registrationId = req.params.id.toUpperCase();
 
-  const registration = await Registration.findOne({ 
+  const registration = await Registration.findOne({
     $or: [
       { registerId: registrationId },
       { userId: registrationId }
@@ -957,10 +1005,10 @@ router.put('/registrations/update/:id', [
   if (paymentStatus !== undefined) {
     registration.paymentStatus = paymentStatus;
   }
-    
+
   if (paidAmount !== undefined) {
     registration.paidAmount = parseFloat(paidAmount);
-      
+
     if (paymentStatus === undefined) {
       if (registration.paidAmount >= registrationFee) {
         registration.paymentStatus = 'paid';
@@ -971,11 +1019,11 @@ router.put('/registrations/update/:id', [
       }
     }
   }
-    
+
   if (paymentMethod !== undefined) {
     registration.paymentMethod = paymentMethod;
   }
-    
+
   if (paymentNotes !== undefined) {
     registration.paymentNotes = paymentNotes;
   }
@@ -986,6 +1034,35 @@ router.put('/registrations/update/:id', [
 
   await registration.save();
   await registration.populate('processedBy', 'firstName lastName username');
+
+  // Also update the participants collection if the participant exists
+  try {
+    const updateFields = {
+      paymentStatus: registration.paymentStatus,
+      paymentDate: new Date(),
+      processedBy: req.user._id
+    };
+
+    if (paymentMethod !== undefined) {
+      updateFields.paymentMethod = paymentMethod;
+    }
+    if (paymentNotes !== undefined) {
+      updateFields.paymentNotes = paymentNotes;
+    }
+
+    await Participant.updateMany(
+      {
+        $or: [
+          { participantId: registration.userId },
+          { participantId: registration.registerId }
+        ]
+      },
+      { $set: updateFields }
+    );
+    console.log(`✅ Updated payment status in participants collection for ${registration.userId || registration.registerId}`);
+  } catch (participantUpdateError) {
+    console.error('⚠️ Error updating participants collection:', participantUpdateError);
+  }
 
   res.json({
     success: true,
@@ -1014,16 +1091,16 @@ router.delete('/registrations/reset/:id', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid input', 
-      errors: errors.array() 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid input',
+      errors: errors.array()
     });
   }
 
   const registrationId = req.params.id.toUpperCase();
 
-  const registration = await Registration.findOne({ 
+  const registration = await Registration.findOne({
     $or: [
       { registerId: registrationId },
       { userId: registrationId }
@@ -1045,6 +1122,30 @@ router.delete('/registrations/reset/:id', [
   registration.processedBy = null;
 
   await registration.save();
+
+  // Also reset the participants collection if the participant exists
+  try {
+    await Participant.updateMany(
+      {
+        $or: [
+          { participantId: registration.userId },
+          { participantId: registration.registerId }
+        ]
+      },
+      {
+        $set: {
+          paymentStatus: 'pending',
+          paymentDate: null,
+          paymentMethod: null,
+          paymentNotes: '',
+          processedBy: null
+        }
+      }
+    );
+    console.log(`✅ Reset payment status in participants collection for ${registration.userId || registration.registerId}`);
+  } catch (participantUpdateError) {
+    console.error('⚠️ Error resetting participants collection:', participantUpdateError);
+  }
 
   res.json({
     success: true,
@@ -1114,11 +1215,11 @@ router.get('/eventRegistrations', asyncHandler(async (req, res) => {
 // @access  Private
 router.get('/registrations/my-payments', asyncHandler(async (req, res) => {
   const { page = 1, limit = 50, status, search } = req.query;
-    
-  let query = { 
+
+  let query = {
     processedBy: req.user._id
   };
-    
+
   if (status && status !== 'all') {
     query.paymentStatus = status;
   }
@@ -1144,12 +1245,12 @@ router.get('/registrations/my-payments', asyncHandler(async (req, res) => {
   const userIds = payments.map(p => p.userId);
   const db = mongoose.connection.db;
   const participantsWithEvents = await db.collection('participants')
-    .find({ 
+    .find({
       userId: { $in: userIds },
       registeredEvents: { $exists: true, $ne: [] }
     })
     .toArray();
-  
+
   // Create event map
   const participantEventsMap = {};
   participantsWithEvents.forEach(p => {
@@ -1165,10 +1266,10 @@ router.get('/registrations/my-payments', asyncHandler(async (req, res) => {
   });
 
   const stats = await Registration.aggregate([
-    { 
-      $match: { 
+    {
+      $match: {
         processedBy: new mongoose.Types.ObjectId(req.user._id)
-      } 
+      }
     },
     {
       $group: {
@@ -1181,11 +1282,11 @@ router.get('/registrations/my-payments', asyncHandler(async (req, res) => {
 
   // Get payment method breakdown
   const methodStats = await Registration.aggregate([
-    { 
-      $match: { 
+    {
+      $match: {
         processedBy: new mongoose.Types.ObjectId(req.user._id),
         paymentStatus: 'paid'
-      } 
+      }
     },
     {
       $group: {
@@ -1212,7 +1313,7 @@ router.get('/registrations/my-payments', asyncHandler(async (req, res) => {
       const registeredEvents = participantEventsMap[p.userId] || [];
       const eventNames = registeredEvents.map(e => e.eventName);
       const displayEvent = eventNames.length > 0 ? eventNames[0] : `${p.userType} - ${p.participationType}`;
-      
+
       return {
         participantId: p.userId || p.registerId,
         userId: p.userId,

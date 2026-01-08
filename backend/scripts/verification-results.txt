@@ -1,0 +1,16 @@
+=== DATABASE VERIFICATION ===
+
+REGISTRATIONS COLLECTION:
+Total documents: 562
+Documents with paidAmount field: 0
+Documents with paymentAmount field: 0
+Documents with amount field: 562
+Documents with paymentStatus "paid": 2
+Documents with paymentStatus "unpaid": 560
+
+PARTICIPANTS COLLECTION:
+Total documents: 0
+Documents with paymentStatus "pending": 0
+Documents with paymentStatus "paid": 0
+
+=== VERIFICATION COMPLETE ===

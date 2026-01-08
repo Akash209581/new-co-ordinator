@@ -26,7 +26,7 @@ const VisitorRegistration: React.FC = () => {
     setIsLoadingVisitors(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/visitors', {
+      const response = await fetch('http://localhost:5005/api/visitors', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -45,7 +45,7 @@ const VisitorRegistration: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!name.trim()) {
       setMessage({ type: 'error', text: 'Please enter visitor name' });
@@ -67,7 +67,7 @@ const VisitorRegistration: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/visitors/register', {
+      const response = await fetch('http://localhost:5005/api/visitors/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const VisitorRegistration: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/visitors/${visitorId}`, {
+      const response = await fetch(`http://localhost:5005/api/visitors/${visitorId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -148,15 +148,15 @@ const VisitorRegistration: React.FC = () => {
         </button>
       </div>
 
-      <div className="content-area" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div className="content-area" style={{
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         minHeight: 'calc(100vh - 120px)',
         padding: '40px 20px'
       }}>
-        <div style={{ 
-          maxWidth: '500px', 
+        <div style={{
+          maxWidth: '500px',
           width: '100%',
           margin: '0 auto'
         }}>
@@ -166,9 +166,9 @@ const VisitorRegistration: React.FC = () => {
             borderRadius: '16px',
             padding: '40px'
           }}>
-            <h2 style={{ 
-              marginBottom: '32px', 
-              fontSize: '1.75rem', 
+            <h2 style={{
+              marginBottom: '32px',
+              fontSize: '1.75rem',
               color: '#2d3748',
               textAlign: 'center',
               fontWeight: '700'
@@ -301,14 +301,14 @@ const VisitorRegistration: React.FC = () => {
             </form>
 
             {/* Visitors count display */}
-            <div style={{ 
-              marginTop: '28px', 
-              paddingTop: '24px', 
+            <div style={{
+              marginTop: '28px',
+              paddingTop: '24px',
               borderTop: '1px solid #e2e8f0',
               textAlign: 'center'
             }}>
-              <p style={{ 
-                fontSize: '0.9rem', 
+              <p style={{
+                fontSize: '0.9rem',
                 color: '#718096',
                 margin: 0
               }}>
@@ -319,7 +319,7 @@ const VisitorRegistration: React.FC = () => {
 
           {/* Visitors List - Below the form */}
           {visitors.length > 0 && (
-            <div className="card" style={{ 
+            <div className="card" style={{
               marginTop: '30px',
               borderRadius: '16px',
               boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'

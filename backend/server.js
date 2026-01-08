@@ -51,18 +51,18 @@ app.use((req, res, next) => {
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mahotsavvignan2025_db_user:mYzQ87sgJ3vKbh0L@events.nghtwjg.mongodb.net/?appName=Events';
 
 mongoose.connect(MONGODB_URI)
-.then(async () => {
-  console.log('✅ Connected to MongoDB Atlas');
-  try {
-    await ensureDefaultAdmin();
-  } catch (err) {
-    console.error('⚠️ Error ensuring default admin:', err);
-  }
-})
-.catch((error) => {
-  console.error('❌ MongoDB connection error:', error);
-  process.exit(1);
-});
+  .then(async () => {
+    console.log('✅ Connected to MongoDB Atlas');
+    try {
+      await ensureDefaultAdmin();
+    } catch (err) {
+      console.error('⚠️ Error ensuring default admin:', err);
+    }
+  })
+  .catch((error) => {
+    console.error('❌ MongoDB connection error:', error);
+    process.exit(1);
+  });
 
 // Ensure a default admin/coordinator user exists (id and password fixed via .env)
 async function ensureDefaultAdmin() {
@@ -189,6 +189,7 @@ app.use((req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
+  console.log('✅ SERVER RESTARTED WITH LATEST CHANGES'); // ADDED TO VERIFY RESTART
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 API Base URL: http://localhost:${PORT}`);
 });

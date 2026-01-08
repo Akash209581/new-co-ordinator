@@ -55,7 +55,7 @@ const LoginPage: React.FC = () => {
         });
       } catch (proxyError) {
         // Fallback to direct backend URL if proxy fails
-        response = await fetch('http://localhost:5000/api/auth/login', {
+        response = await fetch('http://localhost:5005/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('userRole', data.data.coordinator.role || 'coordinator');
       localStorage.setItem('username', data.data.coordinator.username);
       localStorage.setItem('coordinatorData', JSON.stringify(data.data.coordinator));
-      
+
       // Navigate to dashboard
       navigate('/dashboard');
     } catch (err: any) {
@@ -115,7 +115,7 @@ const LoginPage: React.FC = () => {
           <h2>Coordinator Login</h2>
           <p>Sign in to access your dashboard</p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="username">Username</label>
@@ -147,8 +147,8 @@ const LoginPage: React.FC = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="login-button"
             disabled={isLoading}
           >

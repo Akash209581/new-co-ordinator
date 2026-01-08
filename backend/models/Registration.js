@@ -95,6 +95,10 @@ const registrationSchema = new mongoose.Schema({
     enum: ['unpaid', 'paid', 'pending', 'failed'],
     default: 'unpaid'
   },
+  amount: {
+    type: Number,
+    default: 0
+  },
   paymentAmount: {
     type: Number,
     default: 0
@@ -135,23 +139,23 @@ const registrationSchema = new mongoose.Schema({
 });
 
 // Generate unique registration ID
-registrationSchema.pre('save', async function(next) {
+registrationSchema.pre('save', async function (next) {
   if (!this.registerId) {
     const year = new Date().getFullYear().toString().slice(-2);
     const prefix = 'REG' + year;
-    
+
     const lastRegistration = await this.constructor.findOne(
       { registerId: { $regex: `^${prefix}` } },
       {},
       { sort: { registerId: -1 } }
     );
-    
+
     let nextNumber = 1;
     if (lastRegistration) {
       const lastNumber = parseInt(lastRegistration.registerId.slice(5));
       nextNumber = lastNumber + 1;
     }
-    
+
     this.registerId = prefix + nextNumber.toString().padStart(6, '0');
   }
   next();

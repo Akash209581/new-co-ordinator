@@ -27,16 +27,20 @@ router.post('/create-team', auth, async (req, res) => {
       body: JSON.stringify(req.body, null, 2),
       user: req.user?._id
     });
-    
-    const { teamName, eventId, eventName, teamLeaderData, teamMembers = [] } = req.body;
-    
+
+    const { collegeName, eventId, eventName, teamLeaderData, teamMembers = [] } = req.body;
+
     console.log('📝 Event name from frontend:', eventName);
     console.log('📝 Event ID from frontend:', eventId);
-    
+    console.log('📝 College name from frontend:', collegeName);
+
     // Validate required fields
-    if (!teamName || !eventName || !teamLeaderData) {
-      return res.status(400).json({ error: 'Team name, event name, and team leader data are required' });
+    if (!collegeName || !eventName || !teamLeaderData) {
+      return res.status(400).json({ error: 'College name, event name, and team leader data are required' });
     }
+
+    // Auto-generate team name from college and event
+    const teamName = `${collegeName} - ${eventName}`;
 
     // Extract max participants from event name (e.g., "Cricket Championship (13+2)*" = 15)
     let maxParticipants = 15; // default
@@ -49,20 +53,20 @@ router.post('/create-team', auth, async (req, res) => {
 
     // Do NOT look up or create events in DB; trust the frontend event info
     const dbEventId = eventId || `local-${eventName.replace(/\s+/g, '-')}`;
-    
-    // Check if team name already exists for this event
-    const existingTeam = await TeamRegistration.findOne({ 
-      eventId: dbEventId, 
-      teamName: { $regex: new RegExp(`^${teamName}$`, 'i') } 
+
+    // Check if college already has a team for this event
+    const existingTeam = await TeamRegistration.findOne({
+      eventId: dbEventId,
+      collegeName: { $regex: new RegExp(`^${collegeName}$`, 'i') }
     });
-    
+
     if (existingTeam) {
-      return res.status(400).json({ error: 'Team name already exists for this event' });
+      return res.status(400).json({ error: `${collegeName} already has a team registered for this event` });
     }
-    
+
     // Check if team leader or members are already in a team for this event
     const participantIds = [teamLeaderData.participantId, ...teamMembers.map(member => member.participantId)];
-    
+
     const existingTeams = await TeamRegistration.find({
       eventId: dbEventId,
       $or: [
@@ -70,7 +74,7 @@ router.post('/create-team', auth, async (req, res) => {
         { 'teamMembers.participantId': { $in: participantIds } }
       ]
     });
-    
+
     if (existingTeams.length > 0) {
       // Find which participant from the current request is already in a team
       console.log('Existing teams found:', existingTeams.map(t => ({
@@ -79,7 +83,7 @@ router.post('/create-team', auth, async (req, res) => {
         members: t.teamMembers.map(m => m.participantId)
       })));
       console.log('Current participants trying to register:', participantIds);
-      
+
       let conflictingParticipant = null;
       let conflictingTeamName = '';
       for (const team of existingTeams) {
@@ -99,17 +103,17 @@ router.post('/create-team', auth, async (req, res) => {
         }
         if (conflictingParticipant) break;
       }
-      
-      return res.status(400).json({ 
-        error: `❌ Participant ${conflictingParticipant} is already registered in another team (${conflictingTeamName}) for this event. The same participant cannot join multiple teams for the same event, but can participate in different events.` 
+
+      return res.status(400).json({
+        error: `❌ Participant ${conflictingParticipant} is already registered in another team (${conflictingTeamName}) for this event. The same participant cannot join multiple teams for the same event, but can participate in different events.`
       });
     }
-    
+
     // Generate Team ID (TM000001, TM000002, etc.)
     const lastTeam = await TeamRegistration.findOne({}, { teamId: 1 })
       .sort({ createdAt: -1 })
       .limit(1);
-    
+
     let teamNumber = 1;
     if (lastTeam && lastTeam.teamId && lastTeam.teamId.startsWith('TM')) {
       const lastNumber = parseInt(lastTeam.teamId.substring(2));
@@ -117,17 +121,18 @@ router.post('/create-team', auth, async (req, res) => {
         teamNumber = lastNumber + 1;
       }
     }
-    
+
     const teamId = `TM${String(teamNumber).padStart(6, '0')}`;
-    
+
     // Use event name directly from frontend
     const eventNameToUse = eventName || 'Unknown Event';
     console.log('✅ Using event name:', eventNameToUse);
-    
+
     // Create new team registration
     const teamRegistration = new TeamRegistration({
       teamId,
       teamName,
+      collegeName,
       eventId: dbEventId,
       eventName: eventNameToUse,
       teamLeader: teamLeaderData,
@@ -136,9 +141,9 @@ router.post('/create-team', auth, async (req, res) => {
       status: 'forming',
       totalAmount: 500 * (1 + teamMembers.length) // Default registration fee per person * team size
     });
-    
+
     await teamRegistration.save();
-    
+
     console.log(`Team created successfully with ID: ${teamId}`);
     console.log('Saved team details:', {
       teamId: teamRegistration.teamId,
@@ -148,12 +153,12 @@ router.post('/create-team', auth, async (req, res) => {
       members: teamRegistration.teamMembers.map(m => m.participantId),
       savedAt: new Date().toISOString()
     });
-    
+
     res.status(201).json({
       message: 'Team created successfully',
       team: teamRegistration
     });
-    
+
   } catch (error) {
     console.error('Error creating team:', error);
     console.error('Error details:', {
@@ -161,17 +166,17 @@ router.post('/create-team', auth, async (req, res) => {
       message: error.message,
       stack: error.stack
     });
-    
+
     // Send more detailed error information
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: validationErrors 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validationErrors
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Failed to create team',
       message: error.message
     });
@@ -182,16 +187,16 @@ router.post('/create-team', auth, async (req, res) => {
 router.post('/add-member', auth, async (req, res) => {
   try {
     const { teamId, memberData } = req.body;
-    
+
     if (!teamId || !memberData) {
       return res.status(400).json({ error: 'Team ID and member data are required' });
     }
-    
+
     const team = await TeamRegistration.findById(teamId);
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
-    
+
     // Check if participant is already in another team for this event
     const existingTeam = await TeamRegistration.findOne({
       eventId: team.eventId,
@@ -201,18 +206,18 @@ router.post('/add-member', auth, async (req, res) => {
         { 'teamMembers.participantId': memberData.participantId }
       ]
     });
-    
+
     if (existingTeam) {
       return res.status(400).json({ error: 'Participant is already part of another team for this event' });
     }
-    
+
     await team.addTeamMember(memberData);
-    
+
     res.json({
       message: 'Member added successfully',
       team
     });
-    
+
   } catch (error) {
     console.error('Error adding team member:', error);
     res.status(500).json({ error: error.message || 'Failed to add team member' });
@@ -223,23 +228,23 @@ router.post('/add-member', auth, async (req, res) => {
 router.delete('/remove-member', auth, async (req, res) => {
   try {
     const { teamId, participantId } = req.body;
-    
+
     if (!teamId || !participantId) {
       return res.status(400).json({ error: 'Team ID and participant ID are required' });
     }
-    
+
     const team = await TeamRegistration.findById(teamId);
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
-    
+
     await team.removeTeamMember(participantId);
-    
+
     res.json({
       message: 'Member removed successfully',
       team
     });
-    
+
   } catch (error) {
     console.error('Error removing team member:', error);
     res.status(500).json({ error: 'Failed to remove team member' });
@@ -250,23 +255,23 @@ router.delete('/remove-member', auth, async (req, res) => {
 router.post('/update-payment', auth, async (req, res) => {
   try {
     const { teamId, participantId, paymentStatus, paymentId } = req.body;
-    
+
     if (!teamId || !participantId || !paymentStatus) {
       return res.status(400).json({ error: 'Team ID, participant ID, and payment status are required' });
     }
-    
+
     const team = await TeamRegistration.findById(teamId);
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
-    
+
     await team.updateMemberPayment(participantId, paymentStatus, paymentId);
-    
+
     res.json({
       message: 'Payment status updated successfully',
       team
     });
-    
+
   } catch (error) {
     console.error('Error updating payment:', error);
     res.status(500).json({ error: error.message || 'Failed to update payment status' });
@@ -277,37 +282,37 @@ router.post('/update-payment', auth, async (req, res) => {
 router.post('/register-team', auth, async (req, res) => {
   try {
     const { teamId } = req.body;
-    
+
     if (!teamId) {
       return res.status(400).json({ error: 'Team ID is required' });
     }
-    
+
     const team = await TeamRegistration.findById(teamId);
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
-    
+
     // Check if all members have paid
     const allPaid = team.teamMembers.every(member => member.paymentStatus === 'paid');
     if (!allPaid) {
       return res.status(400).json({ error: 'All team members must complete payment before registration' });
     }
-    
+
     // Check if team has minimum required members
     const event = await Event.findById(team.eventId);
     const minTeamSize = event.minTeamSize || 2;
     if (team.teamMembers.length < minTeamSize) {
       return res.status(400).json({ error: `Team must have at least ${minTeamSize} members` });
     }
-    
+
     team.status = 'registered';
     await team.save();
-    
+
     res.json({
       message: 'Team registered successfully',
       team
     });
-    
+
   } catch (error) {
     console.error('Error registering team:', error);
     res.status(500).json({ error: error.message || 'Failed to register team' });
@@ -320,7 +325,7 @@ router.get('/all-teams', auth, async (req, res) => {
     const teams = await TeamRegistration.find({})
       .populate('eventId', 'title description eventDate venue')
       .sort({ createdAt: -1 });
-    
+
     res.json(teams);
   } catch (error) {
     console.error('Error fetching all teams:', error);
@@ -335,13 +340,13 @@ router.get('/team/:teamId', auth, async (req, res) => {
       .populate('eventId', 'name category date venue registrationFee')
       .populate('teamLeader.participantId', 'name email phone')
       .populate('teamMembers.participantId', 'name email phone');
-      
+
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
-    
+
     res.json(team);
-    
+
   } catch (error) {
     console.error('Error fetching team:', error);
     res.status(500).json({ error: 'Failed to fetch team details' });
@@ -356,9 +361,9 @@ router.get('/event/:eventId/teams', auth, async (req, res) => {
       .populate('teamLeader.participantId', 'name email phone')
       .populate('teamMembers.participantId', 'name email phone')
       .sort({ registrationDate: -1 });
-    
+
     res.json(teams);
-    
+
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).json({ error: 'Failed to fetch teams' });
@@ -380,7 +385,7 @@ router.get('/events/category/:category', async (req, res) => {
       .lean();
 
     console.log(`Found ${events.length} ${category} events`);
-    
+
     if (events.length > 0) {
       console.log('Sample event:', events[0]);
     }
@@ -418,7 +423,7 @@ router.get('/events/sorted', async (req, res) => {
 
     // Filter active events
     const activeEvents = events.filter(e => e.isActive !== false);
-    
+
     console.log('Active events:', activeEvents.length);
 
     // Sort events: culturals first, then sports, then others
@@ -426,7 +431,7 @@ router.get('/events/sorted', async (req, res) => {
       const categoryOrder = { 'culturals': 1, 'sports': 2 };
       const orderA = categoryOrder[a.eventType] || 999;
       const orderB = categoryOrder[b.eventType] || 999;
-      
+
       if (orderA !== orderB) return orderA - orderB;
       return (a.eventName || '').localeCompare(b.eventName || '');
     });
@@ -457,29 +462,37 @@ router.post('/verify-payment', async (req, res) => {
     const { mhid } = req.body;
 
     if (!mhid || !mhid.match(/^MH\d{8}$/i)) {
-      return res.status(400).json({ 
-        error: 'Invalid MHID format. Expected format: MH26000001' 
+      return res.status(400).json({
+        error: 'Invalid MHID format. Expected format: MH26000001'
       });
     }
 
     // Check cache first
     const cacheKey = mhid.toUpperCase();
-    const cached = paymentStatusCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-      return res.json(cached.data);
-    }
+    // DISABLE CACHE FOR DEBUGGING
+    // const cached = paymentStatusCache.get(cacheKey);
+    // if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    //   return res.json(cached.data);
+    // }
 
-    // Query only necessary fields for performance
-    const registration = await Registration.findOne({ 
-      userId: mhid.toUpperCase() 
-    })
-    .select('paymentStatus name email phone userId')
-    .lean();
+    // Query full document using native driver to bypass Schema strictness
+    const registration = await Registration.collection.findOne({
+      userId: mhid.toUpperCase()
+    });
+
+    console.log('🔍 Debug Verify Payment:', {
+      mhid,
+      found: !!registration,
+      college: registration?.college,
+      registerId: registration?.registerId,
+      rollNumber: registration?.rollNumber,
+      phone: registration?.phone
+    });
 
     if (!registration) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Participant not found',
-        mhid 
+        mhid
       });
     }
 
@@ -488,6 +501,11 @@ router.post('/verify-payment', async (req, res) => {
       name: registration.name,
       email: registration.email,
       phone: registration.phone,
+      college: registration.college,
+      // Map registerId (DB) to rollNumber (Frontend)
+      rollNumber: registration.registerId || registration.rollNumber || '',
+      // Include registerId explicitly just in case
+      registerId: registration.registerId,
       paymentStatus: registration.paymentStatus || 'unpaid',
       isPaid: registration.paymentStatus === 'paid'
     };
@@ -514,41 +532,87 @@ router.get('/participant/:participantId/teams', auth, async (req, res) => {
         { 'teamMembers.participantId': req.params.participantId }
       ]
     })
-    .populate('eventId', 'name category date venue')
-    .sort({ registrationDate: -1 });
-    
+      .populate('eventId', 'name category date venue')
+      .sort({ registrationDate: -1 });
+
     res.json(teams);
-    
+
   } catch (error) {
     console.error('Error fetching participant teams:', error);
     res.status(500).json({ error: 'Failed to fetch participant teams' });
   }
 });
 
+// Get list of all colleges (with caching)
+let collegesCache = null;
+let collegesCacheTime = 0;
+const COLLEGES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+router.get('/colleges', async (req, res) => {
+  try {
+    // Return cached data if available and fresh
+    if (collegesCache && (Date.now() - collegesCacheTime < COLLEGES_CACHE_TTL)) {
+      return res.json(collegesCache);
+    }
+
+    // Read college.json file
+    const fs = require('fs');
+    const path = require('path');
+    const collegesPath = path.join(__dirname, '../data/college.json');
+
+    const collegesData = JSON.parse(fs.readFileSync(collegesPath, 'utf8'));
+
+    // Extract unique college names
+    const colleges = collegesData.map(c => ({
+      name: c.Name,
+      state: c.State,
+      district: c.District
+    }));
+
+    // Cache the results
+    collegesCache = colleges;
+    collegesCacheTime = Date.now();
+
+    res.json(colleges);
+  } catch (error) {
+    console.error('Error fetching colleges:', error);
+    res.status(500).json({ error: 'Failed to fetch colleges' });
+  }
+});
+
 // Search participants by MHID prefix (for autocomplete)
 router.get('/search-participants', auth, async (req, res) => {
   try {
-    const { query } = req.query;
-    
+    const { query, college } = req.query;
+
     if (!query || query.length < 4) {
       return res.json([]);
     }
 
     const searchQuery = query.toUpperCase();
-    
-    // Search for participants whose userId starts with the query
-    const participants = await Registration.find({
+
+    // Build search criteria
+    const searchCriteria = {
       userId: { $regex: `^${searchQuery}`, $options: 'i' }
-    })
-    .select('userId name email phone paymentStatus')
-    .limit(10)
-    .lean();
+    };
+
+    // Add college filter if provided
+    if (college) {
+      searchCriteria.college = { $regex: new RegExp(`^${college}$`, 'i') };
+    }
+
+    // Search for participants whose userId starts with the query and optionally match college
+    const participants = await Registration.find(searchCriteria)
+      .select('userId name email phone paymentStatus college')
+      .limit(10)
+      .lean();
 
     const results = participants.map(p => ({
       mhid: p.userId,
       name: p.name,
       email: p.email,
       phone: p.phone,
+      college: p.college,
       paymentStatus: p.paymentStatus || 'unpaid',
       isPaid: p.paymentStatus === 'paid'
     }));

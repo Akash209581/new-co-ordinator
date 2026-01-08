@@ -20,6 +20,11 @@ const teamRegistrationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  collegeName: {
+    type: String,
+    required: true,
+    trim: true
+  },
   teamLeader: {
     participantId: {
       type: String,
@@ -101,7 +106,7 @@ teamRegistrationSchema.index({ 'teamLeader.participantId': 1 });
 teamRegistrationSchema.index({ 'teamMembers.participantId': 1 });
 
 // Middleware to check if all members have paid before allowing registration
-teamRegistrationSchema.pre('save', function(next) {
+teamRegistrationSchema.pre('save', function (next) {
   if (this.status === 'registered') {
     const allPaid = this.teamMembers.every(member => member.paymentStatus === 'paid');
     if (!allPaid) {
@@ -113,26 +118,26 @@ teamRegistrationSchema.pre('save', function(next) {
 });
 
 // Method to add team member
-teamRegistrationSchema.methods.addTeamMember = function(memberData) {
+teamRegistrationSchema.methods.addTeamMember = function (memberData) {
   if (this.teamMembers.length >= this.maxTeamSize) {
     throw new Error('Team is already full');
   }
-  
+
   // Check if participant is already in the team
   const existingMember = this.teamMembers.find(
     member => member.participantId.toString() === memberData.participantId.toString()
   );
-  
+
   if (existingMember) {
     throw new Error('Participant is already a team member');
   }
-  
+
   this.teamMembers.push(memberData);
   return this.save();
 };
 
 // Method to remove team member
-teamRegistrationSchema.methods.removeTeamMember = function(participantId) {
+teamRegistrationSchema.methods.removeTeamMember = function (participantId) {
   this.teamMembers = this.teamMembers.filter(
     member => member.participantId.toString() !== participantId.toString()
   );
@@ -140,31 +145,31 @@ teamRegistrationSchema.methods.removeTeamMember = function(participantId) {
 };
 
 // Method to update member payment status
-teamRegistrationSchema.methods.updateMemberPayment = function(participantId, paymentStatus, paymentId = null) {
+teamRegistrationSchema.methods.updateMemberPayment = function (participantId, paymentStatus, paymentId = null) {
   const member = this.teamMembers.find(
     member => member.participantId.toString() === participantId.toString()
   );
-  
+
   if (!member) {
     throw new Error('Team member not found');
   }
-  
+
   member.paymentStatus = paymentStatus;
   if (paymentId) {
     member.paymentId = paymentId;
   }
-  
+
   // Update paid amount
   const paidMembers = this.teamMembers.filter(member => member.paymentStatus === 'paid').length;
   this.paidAmount = paidMembers * (this.totalAmount / this.maxTeamSize);
-  
+
   // Check if all payments are complete
   const allPaid = this.teamMembers.every(member => member.paymentStatus === 'paid');
   if (allPaid && this.teamMembers.length === this.maxTeamSize) {
     this.status = 'complete';
     this.paymentComplete = true;
   }
-  
+
   return this.save();
 };
 

@@ -1,0 +1,23 @@
+=== FINAL VERIFICATION ===
+
+REGISTRATIONS COLLECTION:
+  Total: 562
+  Paid: 2
+  Unpaid: 560
+
+PARTICIPANTS COLLECTION:
+  Total: 97
+  Paid: 2
+  Pending: 95
+
+CROSS-CHECK (Paid Registrations):
+  MH26000005 (Maruthi):
+    Registration: paid
+    Participant: paid ✓
+  MH26000149 (Akash Bandaru):
+    Registration: paid
+    Participant: paid ✓
+
+=== STATUS: CORRECT ===
+Only participants who are paid in registrations are marked as paid.
+All other participants remain as pending.
