@@ -87,10 +87,6 @@ const teamRegistrationSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  paidAmount: {
-    type: Number,
-    default: 0
-  },
   paymentComplete: {
     type: Boolean,
     default: false
@@ -158,10 +154,6 @@ teamRegistrationSchema.methods.updateMemberPayment = function (participantId, pa
   if (paymentId) {
     member.paymentId = paymentId;
   }
-
-  // Update paid amount
-  const paidMembers = this.teamMembers.filter(member => member.paymentStatus === 'paid').length;
-  this.paidAmount = paidMembers * (this.totalAmount / this.maxTeamSize);
 
   // Check if all payments are complete
   const allPaid = this.teamMembers.every(member => member.paymentStatus === 'paid');

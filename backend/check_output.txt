@@ -1,0 +1,65 @@
+﻿[dotenv@17.2.3] injecting env (10) from .env -- tip: ≡ƒöÉ prevent building .env in docker: https://dotenvx.com/prebuild
+Γ£à Connected to MongoDB
+
+≡ƒöì Checking MH26000551 in participants collection:
+============================================================
+Γ£à Found participant!
+
+Full participant record:
+{
+  "_id": "695f7a7d1567d811cfdd2832",
+  "userId": "MH26000551",
+  "name": "Mugho",
+  "email": "nuvvu@gmail.com",
+  "phone": "4567890213",
+  "college": "Vignan's Foundation of Science, Technology & Research, Guntur",
+  "state": "Andhra Pradesh",
+  "district": "Guntur",
+  "dateOfBirth": "2016-01-06T00:00:00.000Z",
+  "gender": "Male",
+  "registerId": "Mungo",
+  "participantType": "general",
+  "referredBy": null,
+  "paymentStatus": "paid",
+  "registeredEvents": [
+    {
+      "eventName": "Volley ball (6+4)*",
+      "eventType": "sports",
+      "category": "Women's Team Field Sports",
+      "description": "Women's Team Field Sports - Volley ball (6+4)*",
+      "fee": 150,
+      "registeredAt": "2026-01-08T09:35:57.385Z",
+      "_id": "695f7a7d1567d811cfdd2833"
+    }
+  ],
+  "registeredAt": "2026-01-08T09:35:57.385Z",
+  "createdAt": "2026-01-08T09:35:57.385Z",
+  "updatedAt": "2026-01-09T05:03:45.859Z",
+  "__v": 0,
+  "paymentDate": "2026-01-08T12:28:55.686Z",
+  "paymentMethod": "upi",
+  "paymentNotes": "Marked as paid from proceed to pay list",
+  "processedBy": "6957e0ca57aee3517c8a5ffe"
+}
+
+≡ƒôï Registered Events:
+
+Event 1:
+  - eventName: "Volley ball (6+4)*"
+  - eventType: "sports"
+  - category: "Women's Team Field Sports"
+  - eventId: N/A
+  - _id: 695f7a7d1567d811cfdd2833
+
+============================================================
+
+≡ƒöì Checking MH26000551 in registrations collection:
+============================================================
+Γ£à Found registration!
+  - Name: Mugho
+  - College: Vignan's Foundation of Science, Technology & Research, Guntur
+  - Payment Status: paid
+  - User Type: participant
+  - Participation Type: none
+
+Γ£à Database connection closed

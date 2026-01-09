@@ -99,14 +99,7 @@ const registrationSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  paymentAmount: {
-    type: Number,
-    default: 0
-  },
-  paidAmount: {
-    type: Number,
-    default: 0
-  },
+
   paymentDate: {
     type: Date,
     default: null

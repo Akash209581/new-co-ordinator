@@ -28,19 +28,20 @@ router.post('/create-team', auth, async (req, res) => {
       user: req.user?._id
     });
 
-    const { collegeName, eventId, eventName, teamLeaderData, teamMembers = [] } = req.body;
+    const { collegeName, eventId, eventName, customTeamName, teamLeaderData, teamMembers = [] } = req.body;
 
     console.log('📝 Event name from frontend:', eventName);
     console.log('📝 Event ID from frontend:', eventId);
     console.log('📝 College name from frontend:', collegeName);
+    console.log('📝 Custom team name from frontend:', customTeamName);
 
     // Validate required fields
-    if (!collegeName || !eventName || !teamLeaderData) {
-      return res.status(400).json({ error: 'College name, event name, and team leader data are required' });
+    if (!collegeName || !eventName || !teamLeaderData || !customTeamName) {
+      return res.status(400).json({ error: 'College name, event name, team name, and team leader data are required' });
     }
 
-    // Auto-generate team name from college and event
-    const teamName = `${collegeName} - ${eventName}`;
+    // Use custom team name directly (no auto-generation)
+    const teamName = customTeamName.trim();
 
     // Extract max participants from event name (e.g., "Cricket Championship (13+2)*" = 15)
     let maxParticipants = 15; // default
@@ -128,6 +129,46 @@ router.post('/create-team', auth, async (req, res) => {
     const eventNameToUse = eventName || 'Unknown Event';
     console.log('✅ Using event name:', eventNameToUse);
 
+    // Calculate total amount based on participant gender
+    // Fetch all participant IDs
+    const allParticipantIds = [teamLeaderData.participantId, ...teamMembers.map(m => m.participantId)];
+
+    // Fetch registration data to get amount and gender information
+    const registrations = await Registration.find({
+      userId: { $in: allParticipantIds.map(id => id.toUpperCase()) }
+    }).select('userId gender amount');
+
+    console.log('📊 Fetched registration data for fee calculation:', registrations.map(r => ({
+      userId: r.userId,
+      amount: r.amount,
+      gender: r.gender
+    })));
+
+    // Calculate total based on registration amount
+    let totalAmount = 0;
+    for (const participantId of allParticipantIds) {
+      const registration = registrations.find(r => r.userId.toUpperCase() === participantId.toUpperCase());
+      if (registration) {
+        // Use stored amount if available, otherwise calculate based on gender
+        let fee = registration.amount;
+
+        if (!fee) {
+          fee = registration.gender?.toLowerCase() === 'female' ? 250 : 500;
+          console.log(`  ${participantId}: No amount found, calculated from gender (${registration.gender}) = ₹${fee}`);
+        } else {
+          console.log(`  ${participantId}: Using stored amount = ₹${fee}`);
+        }
+
+        totalAmount += fee;
+      } else {
+        // Default to ₹500 if registration not found
+        totalAmount += 500;
+        console.log(`  ${participantId}: Not found (Registration), using default ₹500`);
+      }
+    }
+
+    console.log(`💰 Total amount calculated: ₹${totalAmount} for ${allParticipantIds.length} participants`);
+
     // Create new team registration
     const teamRegistration = new TeamRegistration({
       teamId,
@@ -139,7 +180,7 @@ router.post('/create-team', auth, async (req, res) => {
       teamMembers: teamMembers,
       maxTeamSize: maxParticipants || 10,
       status: 'forming',
-      totalAmount: 500 * (1 + teamMembers.length) // Default registration fee per person * team size
+      totalAmount: totalAmount
     });
 
     await teamRegistration.save();
@@ -452,7 +493,7 @@ router.get('/events/sorted', async (req, res) => {
     res.json(formattedEvents);
   } catch (error) {
     console.error('Error fetching sorted events:', error);
-    res.status(500).json({ error: 'Failed to fetch events', details: error.message });
+    return res.status(500).json({ error: 'Failed to fetch events', details: error.message });
   }
 });
 
@@ -496,6 +537,17 @@ router.post('/verify-payment', async (req, res) => {
       });
     }
 
+    // Also fetch registered events from participants collection
+    const participant = await Participant.collection.findOne({
+      userId: mhid.toUpperCase()
+    });
+
+    console.log('🔍 Debug Participant Events:', {
+      mhid,
+      hasParticipantRecord: !!participant,
+      registeredEvents: participant?.registeredEvents || []
+    });
+
     const result = {
       mhid: registration.userId,
       name: registration.name,
@@ -507,7 +559,9 @@ router.post('/verify-payment', async (req, res) => {
       // Include registerId explicitly just in case
       registerId: registration.registerId,
       paymentStatus: registration.paymentStatus || 'unpaid',
-      isPaid: registration.paymentStatus === 'paid'
+      isPaid: registration.paymentStatus === 'paid',
+      // Include registered events from participants collection
+      registeredEvents: participant?.registeredEvents || []
     };
 
     // Cache the result

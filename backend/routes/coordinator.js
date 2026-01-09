@@ -116,33 +116,39 @@ router.get('/dashboard/stats', asyncHandler(async (req, res) => {
 
   const allActivities = [...recentActivities, ...systemActivities].slice(0, 10);
 
-  // Get payment statistics from Registration model - filtered by coordinator
+  // Get payment statistics from Registration model
+  // For admin: show all payments; for coordinator: show only their processed payments
+  const paymentMatchQuery = userRole === 'admin'
+    ? { paymentStatus: { $exists: true } }  // Admin sees all payments
+    : { processedBy: new mongoose.Types.ObjectId(coordinatorId) };  // Coordinator sees only their payments
+
   const paymentStats = await Registration.aggregate([
     {
-      $match: { processedBy: new mongoose.Types.ObjectId(coordinatorId) }
+      $match: paymentMatchQuery
     },
     {
       $group: {
         _id: '$paymentStatus',
         count: { $sum: 1 },
-        totalAmount: { $sum: '$paidAmount' }
+        totalAmount: { $sum: '$amount' }  // Changed from paidAmount to amount
       }
     }
   ]);
 
-  // Get payment method breakdown - filtered by coordinator
+  // Get payment method breakdown
+  const methodMatchQuery = userRole === 'admin'
+    ? { paymentStatus: 'paid' }  // Admin sees all paid transactions
+    : { processedBy: new mongoose.Types.ObjectId(coordinatorId), paymentStatus: 'paid' };  // Coordinator sees only their processed payments
+
   const methodStats = await Registration.aggregate([
     {
-      $match: {
-        processedBy: new mongoose.Types.ObjectId(coordinatorId),
-        paymentStatus: 'paid'
-      }
+      $match: methodMatchQuery
     },
     {
       $group: {
         _id: '$paymentMethod',
         count: { $sum: 1 },
-        totalAmount: { $sum: '$paidAmount' }
+        totalAmount: { $sum: '$amount' }  // Changed from paidAmount to amount
       }
     }
   ]);
@@ -156,11 +162,13 @@ router.get('/dashboard/stats', asyncHandler(async (req, res) => {
   const totalPaymentsProcessed = cashCount + upiCount;
   const totalAmountCollected = cashAmount + upiAmount;
 
-  // Get paid participants count for this coordinator only
-  const paidByCoordinator = await Registration.countDocuments({
-    processedBy: new mongoose.Types.ObjectId(coordinatorId),
-    paymentStatus: 'paid'
-  });
+  // Get paid participants count
+  // For admin: show all paid participants; for coordinator: show only their processed payments
+  const paidCountQuery = userRole === 'admin'
+    ? { paymentStatus: 'paid' }
+    : { processedBy: new mongoose.Types.ObjectId(coordinatorId), paymentStatus: 'paid' };
+
+  const paidByCoordinator = await Registration.countDocuments(paidCountQuery);
 
   // Get total unpaid participants count (global - any coordinator can process)
   const unpaidParticipantsCount = await Registration.countDocuments({
@@ -767,8 +775,7 @@ router.post('/registrations/mark-paid/:id', [
     : registrationFee;
 
   registration.paymentStatus = 'paid';
-  registration.paidAmount = amountToCharge;  // Save to paidAmount field
-  registration.paymentAmount = amountToCharge;  // Also update paymentAmount for consistency
+  registration.amount = amountToCharge;  // Single source of truth for payment amount
   registration.paymentDate = new Date();
   registration.paymentMethod = paymentMethod;
   registration.paymentNotes = paymentNotes;
@@ -782,8 +789,8 @@ router.post('/registrations/mark-paid/:id', [
     await Participant.updateMany(
       {
         $or: [
-          { participantId: registration.userId },
-          { participantId: registration.registerId }
+          { userId: registration.userId },
+          { userId: registration.registerId }
         ]
       },
       {
@@ -878,11 +885,10 @@ router.post('/registrations/process/:id', [
     }
   }
 
-  const totalPaid = (registration.paidAmount || 0) + parseFloat(amount);
+  const totalPaid = (registration.amount || 0) + parseFloat(amount);
   const requiredAmount = registrationFee;
 
-  registration.paidAmount = totalPaid;
-  registration.paymentAmount = requiredAmount;
+  registration.amount = totalPaid;  // Single source of truth for payment amount
   registration.paymentDate = new Date();
   registration.paymentMethod = method;
   registration.processedBy = req.user._id;
@@ -902,8 +908,8 @@ router.post('/registrations/process/:id', [
     await Participant.updateMany(
       {
         $or: [
-          { participantId: registration.userId },
-          { participantId: registration.registerId }
+          { userId: registration.userId },
+          { userId: registration.registerId }
         ]
       },
       {
@@ -971,7 +977,7 @@ router.put('/registrations/update/:id', [
     });
   }
 
-  const { paymentStatus, paidAmount, paymentMethod, paymentNotes } = req.body;
+  const { paymentStatus, amount, paymentMethod, paymentNotes } = req.body;
   const registrationId = req.params.id.toUpperCase();
 
   const registration = await Registration.findOne({
@@ -1006,13 +1012,14 @@ router.put('/registrations/update/:id', [
     registration.paymentStatus = paymentStatus;
   }
 
-  if (paidAmount !== undefined) {
-    registration.paidAmount = parseFloat(paidAmount);
+  if (amount !== undefined) {
+    const parsedAmount = parseFloat(amount);
+    registration.amount = parsedAmount;  // Single source of truth for payment amount
 
     if (paymentStatus === undefined) {
-      if (registration.paidAmount >= registrationFee) {
+      if (registration.amount >= registrationFee) {
         registration.paymentStatus = 'paid';
-      } else if (registration.paidAmount > 0) {
+      } else if (registration.amount > 0) {
         registration.paymentStatus = 'pending';
       } else {
         registration.paymentStatus = 'unpaid';
@@ -1028,7 +1035,7 @@ router.put('/registrations/update/:id', [
     registration.paymentNotes = paymentNotes;
   }
 
-  registration.paymentAmount = registrationFee;
+  // registration.paymentAmount = registrationFee; // REMOVED
   registration.paymentDate = new Date();
   registration.processedBy = req.user._id;
 
@@ -1053,8 +1060,8 @@ router.put('/registrations/update/:id', [
     await Participant.updateMany(
       {
         $or: [
-          { participantId: registration.userId },
-          { participantId: registration.registerId }
+          { userId: registration.userId },
+          { userId: registration.registerId }
         ]
       },
       { $set: updateFields }
@@ -1115,7 +1122,7 @@ router.delete('/registrations/reset/:id', [
   }
 
   registration.paymentStatus = 'unpaid';
-  registration.paidAmount = 0;
+  registration.amount = 0;  // Single source of truth for payment amount
   registration.paymentDate = null;
   registration.paymentMethod = null;
   registration.paymentNotes = '';
@@ -1128,8 +1135,8 @@ router.delete('/registrations/reset/:id', [
     await Participant.updateMany(
       {
         $or: [
-          { participantId: registration.userId },
-          { participantId: registration.registerId }
+          { userId: registration.userId },
+          { userId: registration.registerId }
         ]
       },
       {

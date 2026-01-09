@@ -43,8 +43,7 @@ interface Participant {
   gender?: string;
   registrationStatus: string;
   paymentStatus: string;
-  paymentAmount: number;
-  paidAmount: number;
+  amount: number;
   remainingAmount?: number;
   paymentDate?: string;
   paymentMethod?: string;
@@ -106,12 +105,12 @@ const CoordinatorDashboard: React.FC = () => {
   const [editingPayment, setEditingPayment] = useState<string | null>(null);
   const [editData, setEditData] = useState<{
     paymentStatus: string;
-    paidAmount: string;
+    amount: string;
     paymentMethod: string;
     paymentNotes: string;
   }>({
     paymentStatus: '',
-    paidAmount: '',
+    amount: '',
     paymentMethod: 'cash',
     paymentNotes: ''
   });
@@ -134,6 +133,9 @@ const CoordinatorDashboard: React.FC = () => {
   const [paidParticipantsCount, setPaidParticipantsCount] = useState<number>(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [unpaidParticipantsCount, setUnpaidParticipantsCount] = useState<number>(0);
+
+  // View toggle for Proceed to Pay tab
+  const [proceedToPayView, setProceedToPayView] = useState<'unpaid' | 'processed'>('unpaid');
 
   // Team registration states
   const [teamRegistrations, setTeamRegistrations] = useState<any[]>([]);
@@ -347,15 +349,23 @@ const CoordinatorDashboard: React.FC = () => {
   }, []); // Empty dependency array - run only once on mount
 
   useEffect(() => {
-    // Fetch unpaid participants only when switching to unpaid tab
+    // Fetch data when switching tabs or changing view
+    if (activeTab === 'dashboard') {
+      // Refresh dashboard stats when switching back to dashboard
+      fetchDashboardData();
+    }
     if (activeTab === 'unpaid') {
-      fetchUnpaidParticipants();
+      if (proceedToPayView === 'unpaid') {
+        fetchUnpaidParticipants();
+      } else {
+        fetchPaymentHistory();
+      }
     }
     if (activeTab === 'team') {
       fetchTeamRegistrations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, proceedToPayView]);
 
   useEffect(() => {
     // Close suggestions when clicking outside
@@ -374,29 +384,29 @@ const CoordinatorDashboard: React.FC = () => {
   }, []);
 
   // ============ DASHBOARD SYNCHRONIZATION EFFECT ============
-  // Ensures Dashboard "Total Proceedings" stays in sync with payment state changes
-  useEffect(() => {
-    // Derive Dashboard values from payment states (single source of truth)
-    const derivedPaymentCount = totalPaymentsProcessed;
-    const derivedTotalAmount = totalAmountCollected;
-
-    // Update stats if values have changed to keep Dashboard synchronized
-    setStats(prev => {
-      const needsUpdate =
-        (prev.totalPayments !== derivedPaymentCount) ||
-        (prev.totalAmount !== derivedTotalAmount);
-
-      if (needsUpdate) {
-        return {
-          ...prev,
-          totalPayments: derivedPaymentCount,
-          totalAmount: derivedTotalAmount,
-          paidCount: derivedPaymentCount
-        };
-      }
-      return prev;
-    });
-  }, [totalPaymentsProcessed, totalAmountCollected]);
+  // DISABLED: This was causing fluctuation - fetchDashboardData() already handles stats correctly
+  // useEffect(() => {
+  //   // Derive Dashboard values from payment states (single source of truth)
+  //   const derivedPaymentCount = totalPaymentsProcessed;
+  //   const derivedTotalAmount = totalAmountCollected;
+  // 
+  //   // Update stats if values have changed to keep Dashboard synchronized
+  //   setStats(prev => {
+  //     const needsUpdate =
+  //       (prev.totalPayments !== derivedPaymentCount) ||
+  //       (prev.totalAmount !== derivedTotalAmount);
+  // 
+  //     if (needsUpdate) {
+  //       return {
+  //         ...prev,
+  //         totalPayments: derivedPaymentCount,
+  //         totalAmount: derivedTotalAmount,
+  //         paidCount: derivedPaymentCount
+  //       };
+  //     }
+  //     return prev;
+  //   });
+  // }, [totalPaymentsProcessed, totalAmountCollected]);
 
   // ============ PROCEED TO PAY COUNTER SYNCHRONIZATION ============
   // Derives the paid participants count from actual data (single source of truth)
@@ -579,7 +589,7 @@ const CoordinatorDashboard: React.FC = () => {
         }
       } else {
         // Set default payment amount to remaining amount (considering already paid)
-        const remaining = Math.max(0, baseAmount - (participant.paidAmount || 0));
+        const remaining = Math.max(0, baseAmount - (participant.amount || 0));
         setPaymentData(prev => ({
           ...prev,
           amount: remaining
@@ -600,7 +610,7 @@ const CoordinatorDashboard: React.FC = () => {
     setEditingPayment(id);
     setEditData({
       paymentStatus: participant.paymentStatus,
-      paidAmount: participant.paidAmount.toString(),
+      amount: (participant.amount || 0).toString(),
       paymentMethod: participant.paymentMethod || 'cash',
       paymentNotes: participant.paymentNotes || ''
     });
@@ -610,7 +620,7 @@ const CoordinatorDashboard: React.FC = () => {
     setEditingPayment(null);
     setEditData({
       paymentStatus: '',
-      paidAmount: '',
+      amount: '',
       paymentMethod: 'cash',
       paymentNotes: ''
     });
@@ -618,7 +628,7 @@ const CoordinatorDashboard: React.FC = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updatePayment = async (participantId: string) => {
-    if (!editData.paymentStatus && !editData.paidAmount && !editData.paymentMethod && !editData.paymentNotes) {
+    if (!editData.paymentStatus && !editData.amount && !editData.paymentMethod && !editData.paymentNotes) {
       alert('Please make at least one change to update the payment');
       return;
     }
@@ -637,7 +647,7 @@ const CoordinatorDashboard: React.FC = () => {
       const updatePayload: any = {};
 
       if (editData.paymentStatus) updatePayload.paymentStatus = editData.paymentStatus;
-      if (editData.paidAmount) updatePayload.paidAmount = parseFloat(editData.paidAmount);
+      if (editData.amount) updatePayload.amount = parseFloat(editData.amount);
       if (editData.paymentMethod) updatePayload.paymentMethod = editData.paymentMethod;
       if (editData.paymentNotes) updatePayload.paymentNotes = editData.paymentNotes;
 
@@ -679,7 +689,7 @@ const CoordinatorDashboard: React.FC = () => {
         setSearchedParticipant(prev => prev ? {
           ...prev,
           paymentStatus: data.participant.paymentStatus,
-          paidAmount: data.participant.paidAmount,
+          amount: data.participant.amount,
           paymentDate: data.participant.paymentDate,
           paymentMethod: data.participant.paymentMethod,
           paymentNotes: data.participant.paymentNotes
@@ -732,7 +742,7 @@ const CoordinatorDashboard: React.FC = () => {
         setSearchedParticipant(prev => prev ? {
           ...prev,
           paymentStatus: 'pending',
-          paidAmount: 0,
+          amount: 0,
           paymentDate: '',
           paymentMethod: '',
           paymentNotes: ''
@@ -870,7 +880,7 @@ const CoordinatorDashboard: React.FC = () => {
       const updatedParticipant = {
         ...participant,
         paymentStatus: 'paid',
-        paidAmount: amountToPay,
+        amount: amountToPay,
         paymentMethod,
         paymentDate: currentTimestamp,
         remainingAmount: 0, // Ensure remaining amount is zero for paid users
@@ -1190,7 +1200,7 @@ const CoordinatorDashboard: React.FC = () => {
       setSearchedParticipant(prev => prev ? {
         ...prev,
         paymentStatus: data.participant.paymentStatus,
-        paidAmount: data.participant.paidAmount,
+        amount: data.participant.amount,
         paymentDate: data.participant.paymentDate,
         paymentMethod: data.participant.paymentMethod,
         paymentNotes: data.participant.paymentNotes
@@ -1219,7 +1229,7 @@ const CoordinatorDashboard: React.FC = () => {
     try {
       const token = localStorage.getItem('authToken');
 
-      const response = await fetch('http://localhost:5005/api/coordinator/registrations/my-payments?limit=10', {
+      const response = await fetch('http://localhost:5005/api/coordinator/registrations/my-payments?limit=1000', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -1230,37 +1240,9 @@ const CoordinatorDashboard: React.FC = () => {
         const data = await response.json();
         setPaymentHistory(data.payments || []);
 
-        // Set the total count to ONLY paid payments
-        if (data.statistics && data.statistics.paidCount !== undefined) {
-          setTotalPaymentsProcessed(data.statistics.paidCount);
-        } else {
-          // Fallback: count paid payments from the payment history
-          const paidCount = (data.payments || []).filter((p: any) => p.paymentStatus === 'paid').length;
-          setTotalPaymentsProcessed(paidCount);
-        }
-
-        // Calculate total amount collected from paid payments
-        const paidPayments = (data.payments || []).filter((p: any) => p.paymentStatus === 'paid');
-
-        if (data.statistics && data.statistics.totalAmount !== undefined) {
-          setTotalAmountCollected(data.statistics.totalAmount);
-        } else {
-          // Fallback: calculate from payment history
-          const totalAmount = paidPayments.reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
-          setTotalAmountCollected(totalAmount);
-        }
-
-        // Calculate cash and UPI amounts separately
-        const cashTotal = paidPayments
-          .filter((p: any) => p.paymentMethod === 'cash')
-          .reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
-
-        const upiTotal = paidPayments
-          .filter((p: any) => p.paymentMethod === 'upi')
-          .reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
-
-        setCashAmount(cashTotal);
-        setUpiAmount(upiTotal);
+        // REMOVED: Dashboard stats update logic
+        // Dashboard stats should ONLY be updated by fetchDashboardData()
+        // This prevents fluctuation caused by conflicting data sources
       }
     } catch (error) {
       console.error('Error fetching payment history:', error);
@@ -1290,25 +1272,28 @@ const CoordinatorDashboard: React.FC = () => {
 
   // Memoized filtering logic for Proceed to Pay: merge datasets and apply conditional display rules
   const filteredProceedToPayParticipants = useMemo(() => {
-    const mergedData = [...unpaidParticipants, ...paymentHistory];
-
-    // DEFAULT VIEW: Show all participants (both paid and unpaid) so users can see who needs to pay
-    if (!unpaidSearchQuery || unpaidSearchQuery.trim() === '') {
-      return mergedData
-        .sort((a, b) => {
-          // Sort unpaid first, then by ID
-          if (a.paymentStatus !== b.paymentStatus) {
-            return a.paymentStatus === 'paid' ? 1 : -1;
-          }
-          const idA = getParticipantId(a) || '';
-          const idB = getParticipantId(b) || '';
-          return idA.localeCompare(idB);
-        });
+    // Choose data source based on view toggle
+    let dataSource;
+    if (proceedToPayView === 'unpaid') {
+      // Show only unpaid participants
+      dataSource = unpaidParticipants;
+    } else {
+      // Show only processed payments (paid by this coordinator)
+      dataSource = paymentHistory.filter(p => p.paymentStatus === 'paid');
     }
 
-    // SEARCH VIEW: Show both paid and unpaid matching search criteria
+    // Apply search filter if search query exists
+    if (!unpaidSearchQuery || unpaidSearchQuery.trim() === '') {
+      return dataSource.sort((a, b) => {
+        const idA = getParticipantId(a) || '';
+        const idB = getParticipantId(b) || '';
+        return idA.localeCompare(idB);
+      });
+    }
+
+    // SEARCH VIEW: Filter by search query
     const query = unpaidSearchQuery.toLowerCase().trim();
-    return mergedData
+    return dataSource
       .filter(participant => {
         const participantId = getParticipantId(participant);
         return (
@@ -1324,7 +1309,7 @@ const CoordinatorDashboard: React.FC = () => {
         const idB = getParticipantId(b) || '';
         return idA.localeCompare(idB);
       });
-  }, [unpaidParticipants, paymentHistory, unpaidSearchQuery]);
+  }, [unpaidParticipants, paymentHistory, unpaidSearchQuery, proceedToPayView]);
 
   if (isLoading) {
     return (
@@ -1414,7 +1399,39 @@ const CoordinatorDashboard: React.FC = () => {
                   </svg>
                 </div>
                 <div className="stats-main-content">
-                  <div className="stats-label">Total Amount Collected</div>
+                  <div className="stats-label">
+                    Total Amount Collected
+                    <button
+                      onClick={() => {
+                        fetchDashboardData();
+                        showToast('Dashboard refreshed!', 'success');
+                      }}
+                      style={{
+                        marginLeft: '12px',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: 'white',
+                        color: '#667eea',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#667eea';
+                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.color = '#667eea';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      🔄 Refresh
+                    </button>
+                  </div>
                   <div className="stats-amount" data-amount={totalAmountCollected}>
                     ₹{totalAmountCollected.toLocaleString('en-IN')}
                   </div>
@@ -1560,7 +1577,7 @@ const CoordinatorDashboard: React.FC = () => {
                               <span className="suggestion-separator">•</span>
                               <span className="suggestion-event">{participant.event}</span>
                             </div>
-                            <div className="suggestion-amount">₹{(participant.remainingAmount || participant.paidAmount || 0).toLocaleString('en-IN')}</div>
+                            <div className="suggestion-amount">₹{(participant.remainingAmount || participant.amount || 0).toLocaleString('en-IN')}</div>
                           </div>
                         );
                       })}
@@ -1595,6 +1612,79 @@ const CoordinatorDashboard: React.FC = () => {
                   ✕ Clear
                 </button>
               )}
+            </div>
+
+            {/* View Toggle Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              marginTop: '20px',
+              marginBottom: '20px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setProceedToPayView('unpaid')}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: proceedToPayView === 'unpaid' ? '2px solid #667eea' : '2px solid #e2e8f0',
+                  background: proceedToPayView === 'unpaid'
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'white',
+                  color: proceedToPayView === 'unpaid' ? 'white' : '#4a5568',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: proceedToPayView === 'unpaid' ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (proceedToPayView !== 'unpaid') {
+                    e.currentTarget.style.borderColor = '#cbd5e0';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (proceedToPayView !== 'unpaid') {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
+                }}
+              >
+                📋 All Unpaid ({unpaidParticipants.length})
+              </button>
+
+              <button
+                onClick={() => setProceedToPayView('processed')}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: proceedToPayView === 'processed' ? '2px solid #48bb78' : '2px solid #e2e8f0',
+                  background: proceedToPayView === 'processed'
+                    ? 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)'
+                    : 'white',
+                  color: proceedToPayView === 'processed' ? 'white' : '#4a5568',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: proceedToPayView === 'processed' ? '0 4px 12px rgba(72, 187, 120, 0.3)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (proceedToPayView !== 'processed') {
+                    e.currentTarget.style.borderColor = '#cbd5e0';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (proceedToPayView !== 'processed') {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
+                }}
+              >
+                ✅ My Processed Payments ({paymentHistory.length})
+              </button>
             </div>
 
             {loadingUnpaid ? (
@@ -1777,7 +1867,7 @@ const CoordinatorDashboard: React.FC = () => {
               const paidCount = allParticipants.filter(p => p.paymentStatus === 'paid').length;
               const totalPaid = allParticipants
                 .filter(p => p.paymentStatus === 'paid')
-                .reduce((sum, p) => sum + (p.paidAmount || 0), 0);
+                .reduce((sum, p) => sum + (p.amount || 0), 0);
 
               return allParticipants.length > 0 && (
                 <div className="unpaid-stats">
@@ -1935,7 +2025,7 @@ const CoordinatorDashboard: React.FC = () => {
                                         {team.paymentStatus}
                                       </span>
                                       <div className="payment-amount">
-                                        ₹{(team.paidAmount || 0).toLocaleString('en-IN')} / ₹{(team.paymentAmount || 0).toLocaleString('en-IN')}
+                                        ₹{(team.amount || 0).toLocaleString('en-IN')}
                                       </div>
                                     </div>
                                   </td>

@@ -1,0 +1,75 @@
+﻿[dotenv@17.2.3] injecting env (10) from .env -- tip: ≡ƒæÑ sync secrets across teammates & machines: https://dotenvx.com/ops
+Connected to MongoDB
+
+================================================================================
+PAYMENT DATA STORAGE FOR YOUR 3 TRANSACTIONS
+================================================================================
+
+MH26000479 - BANDARU AKASH
+  Collection: registrations
+  Document ID: 695ce4ef683ee7414acacf73
+
+  Payment Fields:
+    amount:         Rs.150 ΓåÉ Dashboard reads this
+    paidAmount:     Rs.0
+    paymentAmount:  Rs.0
+
+  Payment Details:
+    paymentStatus:  paid
+    paymentMethod:  cash
+    paymentDate:    Thu Jan 08 2026 12:28:30 GMT+0530 (India Standard Time)
+    processedBy:    6957e0ca57aee3517c8a5ffe
+
+--------------------------------------------------------------------------------
+
+MH26000149 - Akash Bandaru
+  Collection: registrations
+  Document ID: 69557a0aeb4c42348189f435
+
+  Payment Fields:
+    amount:         Rs.350 ΓåÉ Dashboard reads this
+    paidAmount:     Rs.0
+    paymentAmount:  Rs.0
+
+  Payment Details:
+    paymentStatus:  paid
+    paymentMethod:  cash
+    paymentDate:    Wed Jan 07 2026 01:13:51 GMT+0530 (India Standard Time)
+    processedBy:    6957e0ca57aee3517c8a5ffe
+
+--------------------------------------------------------------------------------
+
+MH26000005 - Maruthi
+  Collection: registrations
+  Document ID: 6953baf3040e431318d7496c
+
+  Payment Fields:
+    amount:         Rs.150 ΓåÉ Dashboard reads this
+    paidAmount:     Rs.0
+    paymentAmount:  Rs.0
+
+  Payment Details:
+    paymentStatus:  paid
+    paymentMethod:  upi
+    paymentDate:    Thu Jan 08 2026 00:49:32 GMT+0530 (India Standard Time)
+    processedBy:    6957e0ca57aee3517c8a5ffe
+
+--------------------------------------------------------------------------------
+
+DASHBOARD CALCULATION:
+================================================================================
+
+Payment Method: cash
+  Transactions: 2
+  Total Amount: Rs.500
+
+Payment Method: upi
+  Transactions: 1
+  Total Amount: Rs.150
+
+SUMMARY:
+  Cash:  2 payments = Rs.500
+  UPI:   1 payments = Rs.150
+  TOTAL: 3 payments = Rs.650
+
+This is what your dashboard SHOULD show after refresh!

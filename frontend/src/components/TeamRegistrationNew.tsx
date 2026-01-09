@@ -98,6 +98,7 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSearchRef = useRef('');
   const [tableRows, setTableRows] = useState<TableRow[]>([]);
+  const [teamName, setTeamName] = useState('');
 
   // Fetch all teams and colleges on component mount
   useEffect(() => {
@@ -574,9 +575,44 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
         return;
       }
 
-      const hasRegisteredForEvent = data.registeredEvents?.some((event: any) =>
-        event.eventId === selectedEvent._id || event.eventName === selectedEvent.title
-      );
+
+      // More flexible event matching - check by ID or name (case-insensitive, partial match)
+      console.log('🎯 Event Matching Debug:');
+      console.log('  - Selected Event:', selectedEvent.title);
+      console.log('  - Registered Events:', data.registeredEvents);
+
+      const selectedEventTitle = selectedEvent.title.toLowerCase().trim();
+      const hasRegisteredForEvent = data.registeredEvents?.some((event: any) => {
+        console.log(`\n  📍 Checking event:`, event);
+        console.log(`     - eventName: "${event.eventName}"`);
+        console.log(`     - eventId: ${event.eventId || 'MISSING'}`);
+
+        // Check by event ID (exact match)
+        if (event.eventId && selectedEvent._id && event.eventId === selectedEvent._id) {
+          console.log('     ✅ MATCH by eventId!');
+          return true;
+        }
+
+        // Check by event name (case-insensitive, partial match)
+        if (event.eventName) {
+          const registeredEventName = event.eventName.toLowerCase().trim();
+          console.log(`     - Comparing: "${selectedEventTitle}" vs "${registeredEventName}"`);
+
+          const exactMatch = registeredEventName === selectedEventTitle;
+          const includes1 = registeredEventName.includes(selectedEventTitle);
+          const includes2 = selectedEventTitle.includes(registeredEventName);
+
+          console.log(`       Exact: ${exactMatch}, Includes1: ${includes1}, Includes2: ${includes2}`);
+
+          const matches = exactMatch || includes1 || includes2;
+          if (matches) {
+            console.log('     ✅ MATCH by eventName!');
+          }
+          return matches;
+        }
+
+        return false;
+      });
 
       if (!hasRegisteredForEvent) {
         const errorMsg = `❌ Event Registration Required!\n\nThis participant has NOT registered for "${selectedEvent.title}".\n\nOnly participants who have registered for this specific event can join the team.`;
@@ -624,13 +660,36 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
   };
 
   const handleSubmitTeam = async () => {
-    if (!selectedEvent || !selectedCollege || !teamLeaderDetails || !teamLeaderDetails.isPaid) {
-      setError('Please complete all required fields and select a college');
+    // Validate: Event and College must be selected
+    if (!selectedEvent || !selectedCollege) {
+      setError('Please select an event and college');
       return;
     }
 
+    // Validate: Team name is required
+    if (!teamName || !teamName.trim()) {
+      setError('Please enter a team name');
+      return;
+    }
+
+    // Validate: At least one team member must be verified in the table
+    const verifiedRows = tableRows.filter(row => row.isVerified && row.isValid && row.mhid);
+
+    if (verifiedRows.length === 0) {
+      setError('Please add at least one verified team member');
+      return;
+    }
+
+    // Find the team leader (first row)
+    const teamLeaderRow = verifiedRows[0];
+    if (!teamLeaderRow) {
+      setError('Team leader (first member) must be verified');
+      return;
+    }
+
+
     // Check for duplicate MHIDs in the team
-    const allMhids = [teamLeaderDetails.mhid, ...teamMembers.map(m => m.mhid)];
+    const allMhids = verifiedRows.map(row => row.mhid);
     const uniqueMhids = new Set(allMhids.map(id => id.toUpperCase()));
 
     if (uniqueMhids.size !== allMhids.length) {
@@ -654,22 +713,24 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
         eventName: selectedEvent.title
       });
 
+
       const teamData = {
         collegeName: selectedCollege,
         eventId: selectedEvent._id,
         eventName: selectedEvent.title,
+        customTeamName: teamName.trim(), // Always send team name (now required)
         teamLeaderData: {
-          participantId: teamLeaderDetails.mhid,
-          name: teamLeaderDetails.name,
-          email: teamLeaderDetails.email,
-          phoneNumber: teamLeaderDetails.phone
+          participantId: teamLeaderRow.mhid,
+          name: teamLeaderRow.name,
+          email: `${teamLeaderRow.mhid.toLowerCase()}@participant.com`, // Placeholder email
+          phoneNumber: teamLeaderRow.phone
         },
-        teamMembers: teamMembers.map(member => ({
-          participantId: member.mhid,
-          name: member.name,
-          email: member.email,
-          phoneNumber: member.phone,
-          paymentStatus: member.paymentStatus
+        teamMembers: verifiedRows.slice(1).map(row => ({
+          participantId: row.mhid,
+          name: row.name,
+          email: `${row.mhid.toLowerCase()}@participant.com`, // Placeholder email
+          phoneNumber: row.phone,
+          paymentStatus: 'paid' // Assuming all verified members are paid
         }))
       };
 
@@ -717,6 +778,7 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
         `Team Leader:\n👑 ${team.teamLeader.name} (${team.teamLeader.participantId})\n\n` +
         `Team Members:\n${membersList}\n\n` +
         `Total Members: ${1 + team.teamMembers.length}\n` +
+        `Total Amount: ₹${team.totalAmount}\n` +
         `Created At: ${new Date(team.createdAt || Date.now()).toLocaleString()}`
       );
 
@@ -729,9 +791,9 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
       setSelectedEvent(null);
       setSelectedCollege('');
       setCollegeSearchQuery('');
-      setTeamLeaderMhid('');
-      setTeamLeaderDetails(null);
-      setTeamMembers([]);
+      setTableRows([]);
+      setTeamName('');
+      setError('');
 
       if (onTeamCreated) {
         onTeamCreated();
@@ -1269,10 +1331,33 @@ const TeamRegistrationNew: React.FC<TeamRegistrationNewProps> = ({ onTeamCreated
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Team Name Field */}
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <label>Team Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your team name (e.g., Thunder Strikers, Warriors, etc.)"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    className="form-input"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '1rem',
+                      border: '2px solid #ddd',
+                      borderRadius: '8px',
+                      outline: 'none',
+                      background: 'white',
+                      color: '#333'
+                    }}
+                  />
                   <small style={{ color: '#ffffff', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
-                    Team name will be auto-generated as: {selectedCollege ? `"${selectedCollege} - ${selectedEvent.title}"` : '"College Name - Event Name"'}
+                    Choose a unique name for your team
                   </small>
                 </div>
+
 
 
                 {/* Team Members Table */}
